@@ -5,6 +5,8 @@ import { renderChatHeader } from "./components/ChatHeader";
 import { renderMessageList } from "./components/MessageList";
 import { renderChatComposer } from "./components/ChatComposer";
 import { renderDebugPanel } from "./DebugPanel";
+import { renderSettingsPanel } from "./SettingsPanel";
+import { renderAddModelPanel } from "./AddModelPanel";
 
 export class ChatView extends ItemView {
     private unsubscribe?: () => void;
@@ -21,7 +23,7 @@ export class ChatView extends ItemView {
     }
 
     getDisplayText(): string {
-        return "AI Helper Chat";
+        return "Vault Wizard Chat";
     }
 
     getIcon(): string {
@@ -40,14 +42,31 @@ export class ChatView extends ItemView {
     private render() {
         const { contentEl } = this;
         contentEl.empty();
-        contentEl.addClass("ai-helper-root");
+        contentEl.addClass("vault-wizard-root");
 
-        if (this.controller.isDebugVisible()) {
+        const activePanel = this.controller.getActivePanel();
+
+        if (activePanel === "debug") {
             renderDebugPanel(contentEl, this.controller);
             return;
         }
 
-        renderChatHeader(contentEl, () => this.controller.toggleDebug());
+        if (activePanel === "settings") {
+            renderSettingsPanel(contentEl, this.controller);
+            return;
+        }
+
+        if (activePanel === "add-model") {
+            renderAddModelPanel(contentEl, this.controller);
+            return;
+        }
+
+        renderChatHeader(
+            contentEl,
+            () => this.controller.openDebugPanel(),
+            () => this.controller.openSettingsPanel()
+        );
+
         renderMessageList(contentEl, this.controller.getMessages());
         renderChatComposer(
             contentEl,

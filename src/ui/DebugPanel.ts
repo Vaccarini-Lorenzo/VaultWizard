@@ -1,19 +1,20 @@
 import { ChatController } from "../controllers/ChatController";
 
 export function renderDebugPanel(container: HTMLElement, controller: ChatController) {
-    const wrap = container.createDiv({ cls: "ai-helper-debug-wrap" });
+    const wrap = container.createDiv({ cls: "vault-wizard-debug-wrap" });
 
-    const top = wrap.createDiv({ cls: "ai-helper-header" });
-    top.createEl("h3", { text: "Debug", cls: "ai-helper-title" });
+    const top = wrap.createDiv({ cls: "vault-wizard-header" });
+    top.createEl("h3", { text: "Debug", cls: "vault-wizard-title" });
 
-    const backBtn = top.createEl("button", { cls: "ai-helper-icon-btn", text: "Back" });
-    backBtn.addEventListener("click", () => controller.toggleDebug());
+    const backBtn = top.createEl("button", { cls: "vault-wizard-icon-btn", text: "Back" });
+    backBtn.addEventListener("click", () => controller.openChatPanel());
 
-    const pre = wrap.createEl("pre", { cls: "ai-helper-debug-pre" });
+    const pre = wrap.createEl("pre", { cls: "vault-wizard-debug-pre" });
     const state = {
         messageCount: controller.getMessages().length,
         streaming: controller.isStreaming(),
-        activeNotePath: controller.getActiveNotePath()
+        activeNotePath: controller.getActiveNotePath(),
+        configuredModels: controller.getConfiguredModels().length
     };
     pre.textContent = JSON.stringify(state, null, 2);
 }

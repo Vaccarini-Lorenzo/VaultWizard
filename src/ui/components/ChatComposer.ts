@@ -3,14 +3,14 @@ export function renderChatComposer(
     onSend: (value: string) => Promise<void>,
     disabled: boolean
 ) {
-    const composer = container.createDiv({ cls: "ai-helper-composer" });
+    const composer = container.createDiv({ cls: "vault-wizard-composer" });
     const input = composer.createEl("textarea", {
-        cls: "ai-helper-input",
+        cls: "vault-wizard-input",
         attr: { placeholder: 'Type message (/c for current note content)...' }
     });
 
     const send = composer.createEl("button", {
-        cls: "ai-helper-send-btn",
+        cls: "vault-wizard-send-btn",
         text: disabled ? "..." : "Send"
     });
     send.disabled = disabled;

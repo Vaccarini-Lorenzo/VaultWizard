@@ -17,13 +17,13 @@ export default class ObsidianAiHelperPlugin extends Plugin {
             return new ChatView(leaf, this.controller);
         });
 
-        this.addRibbonIcon("message-square", "Toggle AI Helper Chat", async () => {
+        this.addRibbonIcon("message-square", "Toggle Vault Wizard Chat", async () => {
             await this.toggleChat();
         });
 
         this.addCommand({
-            id: "toggle-ai-helper-chat",
-            name: "Toggle AI Helper Chat",
+            id: "toggle-vault-wizard-chat",
+            name: "Toggle Vault Wizard Chat",
             callback: async () => {
                 await this.toggleChat();
             }
@@ -44,7 +44,7 @@ export default class ObsidianAiHelperPlugin extends Plugin {
 
         const rightLeaf = this.app.workspace.getRightLeaf(false);
         if (!rightLeaf) {
-            new Notice("Could not open AI Helper panel.");
+            new Notice("Could not open Vault Wizard panel.");
             return;
         }
 

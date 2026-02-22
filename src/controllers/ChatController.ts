@@ -1,13 +1,17 @@
 import { ChatMessage } from "../models/ChatMessage";
 import { NoteService } from "../services/NoteService";
 import { ChatService } from "../services/ChatService";
+import { UiPanel } from "../models/UiPanel";
+import { ConfiguredModel } from "../models/ConfiguredModel";
 
 type Listener = () => void;
 
 export class ChatController {
     private readonly listeners = new Set<Listener>();
     private readonly messages: ChatMessage[] = [];
-    private debugVisible = false;
+    private readonly configuredModels: ConfiguredModel[] = [];
+
+    private activePanel: UiPanel = "chat";
     private streaming = false;
 
     constructor(
@@ -24,8 +28,12 @@ export class ChatController {
         return this.messages;
     }
 
-    isDebugVisible(): boolean {
-        return this.debugVisible;
+    getConfiguredModels(): readonly ConfiguredModel[] {
+        return this.configuredModels;
+    }
+
+    getActivePanel(): UiPanel {
+        return this.activePanel;
     }
 
     isStreaming(): boolean {
@@ -36,16 +44,30 @@ export class ChatController {
         return this.noteService.getActiveNotePath();
     }
 
-    toggleDebug() {
-        this.debugVisible = !this.debugVisible;
-        this.notify();
+    openChatPanel(): void {
+        this.setActivePanel("chat");
+    }
+
+    openDebugPanel(): void {
+        this.setActivePanel("debug");
+    }
+
+    openSettingsPanel(): void {
+        this.setActivePanel("settings");
+    }
+
+    openAddModelPanel(): void {
+        this.setActivePanel("add-model");
+    }
+
+    returnToSettingsPanel(): void {
+        this.setActivePanel("settings");
     }
 
     async onUserMessage(rawInput: string): Promise<void> {
         const input = rawInput.trim();
         if (!input || this.streaming) return;
 
-        // special slash command
         if (input === "/c") {
             const content = await this.noteService.getActiveNoteContent();
             this.messages.push({
@@ -81,7 +103,13 @@ export class ChatController {
         this.notify();
     }
 
-    private notify() {
+    private setActivePanel(nextPanel: UiPanel): void {
+        if (this.activePanel === nextPanel) return;
+        this.activePanel = nextPanel;
+        this.notify();
+    }
+
+    private notify(): void {
         for (const listener of this.listeners) listener();
     }
 }

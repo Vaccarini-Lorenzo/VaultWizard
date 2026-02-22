@@ -3,7 +3,7 @@
   "name": "Vault Wizard",
   "version": "0.0.1",
   "minAppVersion": "1.5.0",
-  "description": "Draft modular AI helper chat for Obsidian.",
+  "description": "Draft AI chat for Obsidian.",
   "author": "Lorenzo Vaccarini",
   "isDesktopOnly": false
 }

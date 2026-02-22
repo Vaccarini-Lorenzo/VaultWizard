@@ -1,0 +1,1 @@
+export type AiProvider = "azure" | "openai" | "anthropic";

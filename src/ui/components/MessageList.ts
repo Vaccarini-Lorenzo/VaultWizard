@@ -1,12 +1,12 @@
 import { ChatMessage } from "../../models/ChatMessage";
 
 export function renderMessageList(container: HTMLElement, messages: ChatMessage[]) {
-    const list = container.createDiv({ cls: "ai-helper-message-list" });
+    const list = container.createDiv({ cls: "vault-wizard-message-list" });
 
     for (const msg of messages) {
-        const row = list.createDiv({ cls: `ai-helper-message ai-helper-${msg.role}` });
+        const row = list.createDiv({ cls: `vault-wizard-message vault-wizard-${msg.role}` });
         row.createDiv({
-            cls: "ai-helper-message-content",
+            cls: "vault-wizard-message-content",
             text: msg.content
         });
     }

@@ -10,7 +10,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "types": ["node"],
-    "baseUrl": "."
+    "baseUrl": "./src"
   },
   "include": ["src/main.ts", "src/**/*.ts"]
 }

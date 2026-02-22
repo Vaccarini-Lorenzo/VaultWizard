@@ -1,1 +1,1 @@
-export const VIEW_TYPE_AI_HELPER = "obsidian-ai-helper-chat-view";
+export const VIEW_TYPE_AI_HELPER = "obsidian-vault-wizard-chat-view";

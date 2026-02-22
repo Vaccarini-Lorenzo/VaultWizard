@@ -1,7 +1,7 @@
 {
   "name": "vault_wizard",
   "version": "0.0.1",
-  "description": "Draft modular AI helper chat for Obsidian",
+  "description": "Draft AI chat for Obsidian",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",

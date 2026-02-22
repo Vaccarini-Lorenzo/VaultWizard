@@ -1,0 +1,1 @@
+export type UiPanel = "chat" | "debug" | "settings" | "add-model";
