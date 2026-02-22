@@ -6,18 +6,24 @@ import { ModelSettingsRepository } from "./services/ModelSettingsRepository";
 import { NoteService } from "./services/NoteService";
 import { selectedModelState } from "./state/SelectedModelState";
 import { ChatView } from "./ui/ChatView";
+import { LLMController } from "./controllers/LLMController";
+import { AIInvokerFactory } from "./llm/AIInvokerFactory";
+import { AzureAIInvoker } from "./llm/invokers/AzureAIInvoker";
 
 export default class ObsidianAiHelperPlugin extends Plugin {
     private controller!: ChatController;
 
     async onload() {
         const noteService = new NoteService(this.app);
-        const chatService = new ChatService();
         const modelSettingsRepository = new ModelSettingsRepository(this.app);
+
+        const azureAIInvoker = new AzureAIInvoker();
+        const aiInvokerFactory = new AIInvokerFactory(azureAIInvoker);
+        const llmController = new LLMController(selectedModelState, aiInvokerFactory);
 
         this.controller = new ChatController(
             noteService,
-            chatService,
+            llmController,
             modelSettingsRepository,
             selectedModelState
         );

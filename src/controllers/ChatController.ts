@@ -5,6 +5,7 @@ import { ChatService } from "../services/ChatService";
 import { ModelSettingsRepository } from "../services/ModelSettingsRepository";
 import { NoteService } from "../services/NoteService";
 import { SelectedModelState } from "../state/SelectedModelState";
+import { LLMController } from "./LLMController";
 
 type Listener = () => void;
 
@@ -18,7 +19,7 @@ export class ChatController {
 
     constructor(
         private readonly noteService: NoteService,
-        private readonly chatService: ChatService,
+        private readonly llmController: LLMController,
         private readonly modelSettingsRepository: ModelSettingsRepository,
         private readonly selectedModelState: SelectedModelState
     ) {}
@@ -148,13 +149,18 @@ export class ChatController {
         this.streaming = true;
         this.notify();
 
-        await this.chatService.streamEcho(input, (chunk) => {
-            assistantMessage.content += chunk;
+        try {
+            await this.llmController.streamAssistantReply(input, (chunk) => {
+                assistantMessage.content += chunk;
+                this.notify();
+            });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unexpected LLM error.";
+            assistantMessage.content += `\n${errorMessage}`;
+        } finally {
+            this.streaming = false;
             this.notify();
-        });
-
-        this.streaming = false;
-        this.notify();
+        }
     }
 
     private setActivePanel(nextPanel: UiPanel): void {
