@@ -1,0 +1,24 @@
+{
+  "name": "vault_wizard",
+  "version": "0.0.1",
+  "description": "Draft modular AI helper chat for Obsidian",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs production",
+    "sync": "bash ./scripts/sync.sh \"/Users/lorenzovaccarini/Library/Mobile Documents/iCloud~md~obsidian/Documents/Obsidian Vault\""
+  },
+  "keywords": [
+    "obsidian",
+    "plugin"
+  ],
+  "author": "Lorenzo Vaccarini",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "builtin-modules": "^4.0.0",
+    "esbuild": "^0.25.0",
+    "obsidian": "^1.7.2",
+    "typescript": "^5.8.2"
+  }
+}
