@@ -234,3 +234,16 @@
     border-color: var(--interactive-accent);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 20%, transparent);
 }
+
+.vault-wizard-add-model-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+}
+
+.vault-wizard-header-model-select {
+    min-width: 170px;
+    max-width: 220px;
+    height: 30px;
+    font-size: 12px;
+}

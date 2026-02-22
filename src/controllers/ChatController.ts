@@ -1,8 +1,10 @@
 import { ChatMessage } from "../models/ChatMessage";
-import { NoteService } from "../services/NoteService";
-import { ChatService } from "../services/ChatService";
+import { ConfiguredModel, NewConfiguredModelInput } from "../models/ConfiguredModel";
 import { UiPanel } from "../models/UiPanel";
-import { ConfiguredModel } from "../models/ConfiguredModel";
+import { ChatService } from "../services/ChatService";
+import { ModelSettingsRepository } from "../services/ModelSettingsRepository";
+import { NoteService } from "../services/NoteService";
+import { SelectedModelState } from "../state/SelectedModelState";
 
 type Listener = () => void;
 
@@ -16,8 +18,23 @@ export class ChatController {
 
     constructor(
         private readonly noteService: NoteService,
-        private readonly chatService: ChatService
+        private readonly chatService: ChatService,
+        private readonly modelSettingsRepository: ModelSettingsRepository,
+        private readonly selectedModelState: SelectedModelState
     ) {}
+
+    async initialize(): Promise<void> {
+        const loadedConfiguredModels = await this.modelSettingsRepository.loadModels();
+        this.configuredModels.splice(0, this.configuredModels.length, ...loadedConfiguredModels);
+
+        if (loadedConfiguredModels.length > 0) {
+            this.selectedModelState.setSelectedModel(loadedConfiguredModels[0]);
+        } else {
+            this.selectedModelState.setSelectedModel(null);
+        }
+
+        this.notify();
+    }
 
     subscribe(listener: Listener): () => void {
         this.listeners.add(listener);
@@ -32,6 +49,18 @@ export class ChatController {
         return this.configuredModels;
     }
 
+    getSelectedConfiguredModel(): ConfiguredModel | null {
+        return this.selectedModelState.getSelectedModel();
+    }
+
+    selectConfiguredModelById(configuredModelId: string): void {
+        const nextSelectedModel =
+            this.configuredModels.find((configuredModel) => configuredModel.id === configuredModelId) ?? null;
+
+        this.selectedModelState.setSelectedModel(nextSelectedModel);
+        this.notify();
+    }
+
     getActivePanel(): UiPanel {
         return this.activePanel;
     }
@@ -42,6 +71,30 @@ export class ChatController {
 
     getActiveNotePath(): string {
         return this.noteService.getActiveNotePath();
+    }
+
+    async saveConfiguredModel(newConfiguredModelInput: NewConfiguredModelInput): Promise<void> {
+        const sanitizedModelName = newConfiguredModelInput.modelName.trim();
+        if (!sanitizedModelName) return;
+
+        const configuredModelToPersist: ConfiguredModel = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            provider: newConfiguredModelInput.provider,
+            modelName: sanitizedModelName,
+            settings: newConfiguredModelInput.settings,
+            createdAt: Date.now()
+        };
+
+        const nextConfiguredModels = [...this.configuredModels, configuredModelToPersist];
+        await this.modelSettingsRepository.saveModels(nextConfiguredModels);
+
+        this.configuredModels.splice(0, this.configuredModels.length, ...nextConfiguredModels);
+
+        if (!this.selectedModelState.getSelectedModel()) {
+            this.selectedModelState.setSelectedModel(configuredModelToPersist);
+        }
+
+        this.notify();
     }
 
     openChatPanel(): void {
@@ -91,6 +144,7 @@ export class ChatController {
             timestamp: Date.now()
         };
         this.messages.push(assistantMessage);
+
         this.streaming = true;
         this.notify();
 

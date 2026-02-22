@@ -1,12 +1,12 @@
 import { ItemView, WorkspaceLeaf } from "obsidian";
 import { VIEW_TYPE_AI_HELPER } from "../constants";
 import { ChatController } from "../controllers/ChatController";
-import { renderChatHeader } from "./components/ChatHeader";
-import { renderMessageList } from "./components/MessageList";
-import { renderChatComposer } from "./components/ChatComposer";
+import { renderAddModelPanel } from "./AddModelPanel";
 import { renderDebugPanel } from "./DebugPanel";
 import { renderSettingsPanel } from "./SettingsPanel";
-import { renderAddModelPanel } from "./AddModelPanel";
+import { renderChatComposer } from "./components/ChatComposer";
+import { renderChatHeader } from "./components/ChatHeader";
+import { renderMessageList } from "./components/MessageList";
 
 export class ChatView extends ItemView {
     private unsubscribe?: () => void;
@@ -61,10 +61,15 @@ export class ChatView extends ItemView {
             return;
         }
 
+        const selectedConfiguredModel = this.controller.getSelectedConfiguredModel();
+
         renderChatHeader(
             contentEl,
             () => this.controller.openDebugPanel(),
-            () => this.controller.openSettingsPanel()
+            () => this.controller.openSettingsPanel(),
+            this.controller.getConfiguredModels(),
+            selectedConfiguredModel?.id ?? null,
+            (configuredModelId) => this.controller.selectConfiguredModelById(configuredModelId)
         );
 
         renderMessageList(contentEl, this.controller.getMessages());

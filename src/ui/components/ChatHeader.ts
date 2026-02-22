@@ -1,22 +1,56 @@
 import { setIcon } from "obsidian";
+import { ConfiguredModel } from "../../models/ConfiguredModel";
 
 export function renderChatHeader(
     container: HTMLElement,
     onOpenDebugPanel: () => void,
-    onOpenSettingsPanel: () => void
+    onOpenSettingsPanel: () => void,
+    configuredModels: readonly ConfiguredModel[],
+    selectedConfiguredModelId: string | null,
+    onSelectConfiguredModel: (configuredModelId: string) => void
 ) {
     const header = container.createDiv({ cls: "vault-wizard-header" });
     header.createEl("h3", { text: "Vault Wizard", cls: "vault-wizard-title" });
 
-    const actionsWrap = header.createDiv({ cls: "vault-wizard-header-actions" });
+    const controlsWrapper = header.createDiv({ cls: "vault-wizard-header-actions" });
 
-    const debugBtn = actionsWrap.createEl("button", { cls: "vault-wizard-icon-btn" });
-    debugBtn.setAttribute("aria-label", "Open debug panel");
-    setIcon(debugBtn, "bug");
-    debugBtn.addEventListener("click", onOpenDebugPanel);
+    const modelSelect = controlsWrapper.createEl("select", {
+        cls: "vault-wizard-form-select vault-wizard-header-model-select"
+    });
 
-    const settingsBtn = actionsWrap.createEl("button", { cls: "vault-wizard-icon-btn" });
-    settingsBtn.setAttribute("aria-label", "Open settings panel");
-    setIcon(settingsBtn, "settings");
-    settingsBtn.addEventListener("click", onOpenSettingsPanel);
+    if (configuredModels.length === 0) {
+        const emptyOption = modelSelect.createEl("option", {
+            value: "",
+            text: "No models"
+        });
+        emptyOption.selected = true;
+        modelSelect.disabled = true;
+    } else {
+        for (const configuredModel of configuredModels) {
+            const optionLabel = `${configuredModel.provider} • ${configuredModel.modelName}`;
+            const option = modelSelect.createEl("option", {
+                value: configuredModel.id,
+                text: optionLabel
+            });
+
+            if (selectedConfiguredModelId && configuredModel.id === selectedConfiguredModelId) {
+                option.selected = true;
+            }
+        }
+
+        modelSelect.addEventListener("change", () => {
+            if (!modelSelect.value) return;
+            onSelectConfiguredModel(modelSelect.value);
+        });
+    }
+
+    const debugButton = controlsWrapper.createEl("button", { cls: "vault-wizard-icon-btn" });
+    debugButton.setAttribute("aria-label", "Open debug panel");
+    setIcon(debugButton, "bug");
+    debugButton.addEventListener("click", onOpenDebugPanel);
+
+    const settingsButton = controlsWrapper.createEl("button", { cls: "vault-wizard-icon-btn" });
+    settingsButton.setAttribute("aria-label", "Open settings panel");
+    setIcon(settingsButton, "settings");
+    settingsButton.addEventListener("click", onOpenSettingsPanel);
 }

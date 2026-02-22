@@ -1,9 +1,11 @@
 import { Notice, Plugin } from "obsidian";
 import { VIEW_TYPE_AI_HELPER } from "./constants";
-import { ChatView } from "./ui/ChatView";
-import { NoteService } from "./services/NoteService";
-import { ChatService } from "./services/ChatService";
 import { ChatController } from "./controllers/ChatController";
+import { ChatService } from "./services/ChatService";
+import { ModelSettingsRepository } from "./services/ModelSettingsRepository";
+import { NoteService } from "./services/NoteService";
+import { selectedModelState } from "./state/SelectedModelState";
+import { ChatView } from "./ui/ChatView";
 
 export default class ObsidianAiHelperPlugin extends Plugin {
     private controller!: ChatController;
@@ -11,7 +13,15 @@ export default class ObsidianAiHelperPlugin extends Plugin {
     async onload() {
         const noteService = new NoteService(this.app);
         const chatService = new ChatService();
-        this.controller = new ChatController(noteService, chatService);
+        const modelSettingsRepository = new ModelSettingsRepository(this.app);
+
+        this.controller = new ChatController(
+            noteService,
+            chatService,
+            modelSettingsRepository,
+            selectedModelState
+        );
+        await this.controller.initialize();
 
         this.registerView(VIEW_TYPE_AI_HELPER, (leaf) => {
             return new ChatView(leaf, this.controller);
