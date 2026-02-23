@@ -73,7 +73,6 @@ export class NoteService {
         if (selectedContextSnapshot?.text){
             context += `\n<SELECTED_CONTEXT_START>\n${selectedContextSnapshot.text}\n<SELECTED_CONTEXT_END>`;
         }
-        console.log("Context retrieved:", context);
         return context;
     }
 

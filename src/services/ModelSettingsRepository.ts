@@ -15,7 +15,6 @@ export class ModelSettingsRepository {
         const basePath = (this.app.vault.adapter as any)?.basePath ?? (window as any)?.app?.vault?.adapter?.basePath;
         this.pluginFolderPath = path.join(".obsidian", "plugins", "vault_wizard");
         this.settingsFilePath = path.join(this.pluginFolderPath, ".model_settings.json");
-        console.log("ModelSettingsRepository initialized with settings file path:", this.settingsFilePath);
     }
 
     async loadModels(): Promise<ConfiguredModel[]> {

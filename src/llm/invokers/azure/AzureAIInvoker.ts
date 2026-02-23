@@ -20,8 +20,6 @@ export class AzureAIInvoker implements AIInvoker {
         const apiVersion = this.tryGetSetting(aiInvokerInput, "apiVersion");
         const endpointUrl = this.buildResponsesUrl(endpointBase, apiVersion);
 
-        console.log(aiInvokerInput)
-
         const requestBody: Record<string, unknown> = {
             model: deploymentName,
             input: this.buildInputMessages(),
