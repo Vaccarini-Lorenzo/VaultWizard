@@ -17,7 +17,6 @@ export default class ObsidianAiHelperPlugin extends Plugin {
     async onload() {
         const noteService = new NoteService(this.app);
         const modelSettingsRepository = new ModelSettingsRepository(this.app);
-
         const azureAIInvoker = new AzureAIInvoker();
         const aiInvokerFactory = new AIInvokerFactory(azureAIInvoker);
         const llmController = new LLMController(selectedModelState, aiInvokerFactory);
@@ -40,7 +39,12 @@ export default class ObsidianAiHelperPlugin extends Plugin {
         this.app.vault.on("modify", (file) => {
             if (!file) return;
             noteService.notifyFileModified(file.path);
-        })
+        });
+
+        this.registerDomEvent(document, "selectionchange", () => {
+            noteService.captureSelectionFromActiveNote();
+        });
+
 
         this.registerView(VIEW_TYPE_AI_HELPER, (leaf) => {
             return new ChatView(leaf, this.controller);

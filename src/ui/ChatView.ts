@@ -7,10 +7,13 @@ import { renderSettingsPanel } from "./SettingsPanel";
 import { renderChatComposer } from "./components/ChatComposer";
 import { renderChatHeader } from "./components/ChatHeader";
 import { renderMessageList } from "./components/MessageList";
+import { renderSelectedContextBadge } from "./components/SelectedContextBadge";
 import { currentChatStorage } from "services/CurrentChatStorage";
+import { selectedContextStorage } from "services/SelectedContextStorage";
 
 export class ChatView extends ItemView {
     private unsubscribe?: () => void;
+    private unsubscribeSelection?: () => void;
     private isOpen = false;
 
     constructor(
@@ -42,11 +45,13 @@ export class ChatView extends ItemView {
 
     async onOpen() {
         this.unsubscribe = this.controller.subscribe(() => this.render());
+        this.unsubscribeSelection = selectedContextStorage.subscribe(() => this.render());
         this.render();
     }
 
     async onClose() {
         this.unsubscribe?.();
+        this.unsubscribeSelection?.();
     }
 
     private render() {
@@ -89,9 +94,13 @@ export class ChatView extends ItemView {
             sourcePath: this.controller.getActiveNotePath()
         });
 
+        renderSelectedContextBadge(contentEl, selectedContextStorage.getSelection());
+
         renderChatComposer(
             contentEl,
-            async (value) => this.controller.onUserMessage(value),
+            async (value) => {
+                await this.controller.onUserMessage(value);
+            },
             this.controller.isStreaming()
         );
     }

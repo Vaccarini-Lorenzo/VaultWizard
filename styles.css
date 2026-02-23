@@ -430,3 +430,26 @@
 .vault-wizard-new-chat-btn {
     color: var(--text-accent);
 }
+
+.vault-wizard-selected-context-badge {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid color-mix(in srgb, var(--interactive-accent) 35%, var(--background-modifier-border));
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--interactive-accent) 12%, var(--background-secondary));
+    font-size: 12px;
+}
+
+.vault-wizard-selected-context-file {
+    color: var(--text-normal);
+    word-break: break-word;
+}
+
+.vault-wizard-selected-context-lines {
+    color: var(--text-accent);
+    font-weight: 600;
+    white-space: nowrap;
+}

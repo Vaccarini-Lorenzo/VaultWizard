@@ -1,3 +1,4 @@
+import { selectedContextStorage } from "services/SelectedContextStorage";
 import { ChatMessage } from "../models/ChatMessage";
 import { ConfiguredModel, NewConfiguredModelInput } from "../models/ConfiguredModel";
 import { DebugTurnTrace } from "../models/DebugTurnTrace";
@@ -179,6 +180,8 @@ export class ChatController {
         };
 
         currentChatStorage.appendMessage(assistantMessage);
+        // Clear the selected context so that the badge disappears. The context has been crafted anyways
+        selectedContextStorage.clear();
 
         this.streaming = true;
         this.notify();
