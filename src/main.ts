@@ -32,6 +32,16 @@ export default class ObsidianAiHelperPlugin extends Plugin {
         );
         await this.controller.initialize();
 
+        this.app.workspace.on("file-open", (file) => {
+            if (!file) return;
+            noteService.notifyFileOpened(file.path);
+        });
+
+        this.app.vault.on("modify", (file) => {
+            if (!file) return;
+            noteService.notifyFileModified(file.path);
+        })
+
         this.registerView(VIEW_TYPE_AI_HELPER, (leaf) => {
             return new ChatView(leaf, this.controller);
         });

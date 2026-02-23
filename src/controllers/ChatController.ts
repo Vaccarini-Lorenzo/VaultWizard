@@ -1,12 +1,15 @@
 import { ChatMessage } from "../models/ChatMessage";
 import { ConfiguredModel, NewConfiguredModelInput } from "../models/ConfiguredModel";
+import { DebugTurnTrace } from "../models/DebugTurnTrace";
+import { TokenUsage } from "../models/TokenUsage";
 import { UiPanel } from "../models/UiPanel";
+import { ConversationIdFactory } from "../services/ConversationIdFactory";
+import { currentChatStorage } from "../services/CurrentChatStorage";
+import { debugTraceStorage } from "../services/DebugTraceStorage";
 import { ModelSettingsRepository } from "../services/ModelSettingsRepository";
 import { NoteService } from "../services/NoteService";
-import { ConversationIdFactory } from "../services/ConversationIdFactory";
 import { SelectedModelState } from "../state/SelectedModelState";
 import { LLMController } from "./LLMController";
-import { currentChatStorage } from "services/CurrentChatStorage";
 
 type Listener = () => void;
 
@@ -27,6 +30,7 @@ export class ChatController {
     ) {
         this.conversationId = this.conversationIdFactory.createConversationId();
         currentChatStorage.clear(this.conversationId);
+        debugTraceStorage.clear(this.conversationId);
     }
 
     async initialize(): Promise<void> {
@@ -54,6 +58,7 @@ export class ChatController {
     resetChatAndStartNewConversation(): void {
         this.conversationId = this.conversationIdFactory.createConversationId();
         currentChatStorage.clear(this.conversationId);
+        debugTraceStorage.clear(this.conversationId);
         this.notify();
     }
 
@@ -83,6 +88,14 @@ export class ChatController {
 
     getActiveNotePath(): string {
         return this.noteService.getActiveNotePath();
+    }
+
+    getDebugTurns(): readonly DebugTurnTrace[] {
+        return debugTraceStorage.getTraces();
+    }
+
+    getAggregateTokenUsage(): TokenUsage {
+        return debugTraceStorage.getAggregateTokenUsage();
     }
 
     async saveConfiguredModel(newConfiguredModelInput: NewConfiguredModelInput): Promise<void> {
@@ -131,12 +144,19 @@ export class ChatController {
 
     async onUserMessage(rawInput: string): Promise<void> {
         const input = rawInput.trim();
+        const context = await this.noteService.getContext();
+
         if (!input || this.streaming) return;
 
+        currentChatStorage.appendMessage({
+            role: "user",
+            content: input,
+            timestamp: Date.now()
+        });
+
         if (input === "/c") {
-            const context = await this.noteService.getActiveNoteContent();
             currentChatStorage.appendMessage({
-                role: "assistant",
+                role: "tool",
                 content: context,
                 timestamp: Date.now()
             });
@@ -144,11 +164,12 @@ export class ChatController {
             return;
         }
 
-        currentChatStorage.appendMessage({
-            role: "user",
-            content: input,
+        const contextMessage: ChatMessage = {
+            role: "tool",
+            content: context,
             timestamp: Date.now()
-        });
+        };
+        currentChatStorage.appendMessage(contextMessage);
 
         const assistantMessage: ChatMessage = {
             role: "assistant",
@@ -161,16 +182,27 @@ export class ChatController {
         this.streaming = true;
         this.notify();
 
+        let capturedTokenUsage: TokenUsage | null = null;
+
         try {
-            const context = await this.noteService.getContext();
-            await this.llmController.streamAssistantReply(input, context, (chunk) => {
+            const invocationResult = await this.llmController.streamAssistantReply(input, (chunk) => {
                 assistantMessage.content += chunk;
                 this.notify();
             });
+
+            capturedTokenUsage = invocationResult.tokenUsage ?? null;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Unexpected LLM error.";
             assistantMessage.content += `\n${errorMessage}`;
         } finally {
+            debugTraceStorage.appendTrace({
+                timestamp: Date.now(),
+                userPrompt: input,
+                context,
+                assistantResponse: assistantMessage.content,
+                tokenUsage: capturedTokenUsage
+            });
+
             this.streaming = false;
             this.notify();
         }

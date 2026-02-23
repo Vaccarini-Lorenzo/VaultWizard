@@ -1,5 +1,6 @@
 import { SelectedModelState } from "../state/SelectedModelState";
 import { AIInvokerFactory } from "../llm/AIInvokerFactory";
+import { AIInvokerResult } from "../llm/invokers/AIInvoker";
 
 export class LLMController {
     constructor(
@@ -9,16 +10,15 @@ export class LLMController {
 
     async streamAssistantReply(
         newUserMessage: string,
-        context: string | undefined,
         onChunk: (chunk: string) => void
-    ): Promise<void> {
+    ): Promise<AIInvokerResult> {
         const selectedModel = this.selectedModelState.getSelectedModel();
         if (!selectedModel) {
             onChunk("No model selected. Please configure and select a model.");
-            return;
+            return {};
         }
 
         const aiInvoker = this.aiInvokerFactory.getInvoker(selectedModel.provider);
-        await aiInvoker.streamResponse({ newUserMessage, context, configuredModel: selectedModel }, onChunk);
+        return await aiInvoker.streamResponse({ newUserMessage, configuredModel: selectedModel }, onChunk);
     }
 }
