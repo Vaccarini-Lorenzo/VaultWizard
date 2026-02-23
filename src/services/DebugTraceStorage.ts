@@ -10,8 +10,17 @@ class DebugTraceStorage {
         this.conversationId = conversationId;
     }
 
-    appendTrace(trace: DebugTurnTrace): void {
-        this.traces.push(trace);
+    getConversationId(): string {
+        return this.conversationId;
+    }
+
+    replaceTraces(conversationId: string, debugTraces: readonly DebugTurnTrace[]): void {
+        this.conversationId = conversationId;
+        this.traces = debugTraces.map((debugTrace) => ({ ...debugTrace }));
+    }
+
+    appendTrace(debugTrace: DebugTurnTrace): void {
+        this.traces.push(debugTrace);
     }
 
     getTraces(): readonly DebugTurnTrace[] {
@@ -20,13 +29,14 @@ class DebugTraceStorage {
 
     getAggregateTokenUsage(): TokenUsage {
         return this.traces.reduce<TokenUsage>(
-            (aggregateUsage, currentTrace) => {
-                if (!currentTrace.tokenUsage) return aggregateUsage;
+            (aggregatedUsage, trace) => {
+                const tokenUsage = trace.tokenUsage;
+                if (!tokenUsage) return aggregatedUsage;
 
                 return {
-                    inputTokens: aggregateUsage.inputTokens + currentTrace.tokenUsage.inputTokens,
-                    outputTokens: aggregateUsage.outputTokens + currentTrace.tokenUsage.outputTokens,
-                    cachedInputTokens: aggregateUsage.cachedInputTokens + currentTrace.tokenUsage.cachedInputTokens
+                    inputTokens: aggregatedUsage.inputTokens + tokenUsage.inputTokens,
+                    outputTokens: aggregatedUsage.outputTokens + tokenUsage.outputTokens,
+                    cachedInputTokens: aggregatedUsage.cachedInputTokens + tokenUsage.cachedInputTokens
                 };
             },
             { inputTokens: 0, outputTokens: 0, cachedInputTokens: 0 }

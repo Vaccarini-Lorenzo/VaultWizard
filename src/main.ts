@@ -11,6 +11,7 @@ import { AzureAIInvoker } from "./llm/invokers/azure/AzureAIInvoker";
 import { ConversationIdFactory } from "./services/ConversationIdFactory";
 import { PersistenceController } from "./controllers/PersistenceController";
 import { currentChatStorage } from "./services/CurrentChatStorage";
+import { debugTraceStorage } from "./services/DebugTraceStorage";
 
 export default class ObsidianAiHelperPlugin extends Plugin {
     private controller!: ChatController;
@@ -28,6 +29,10 @@ export default class ObsidianAiHelperPlugin extends Plugin {
             resolveConversationMessages: (conversationId: string) => {
                 if (currentChatStorage.conversationId !== conversationId) return null;
                 return currentChatStorage.getMessages();
+            },
+            resolveConversationDebugTraces: (conversationId: string) => {
+                if (debugTraceStorage.getConversationId() !== conversationId) return null;
+                return debugTraceStorage.getTraces();
             }
         });
 

@@ -1,10 +1,12 @@
 import { ChatMessage } from "../models/ChatMessage";
+import { DebugTurnTrace } from "../models/DebugTurnTrace";
 
 export interface PersistedConversation {
     conversationId: string;
     title: string;
     updatedAt: number;
     messages: ChatMessage[];
+    debugTraces: DebugTurnTrace[];
 }
 
 export interface ChatPersistenceProvider {

@@ -1,18 +1,25 @@
 import { ChatHistorySession } from "../models/ChatHistorySession";
 import { ChatMessage } from "../models/ChatMessage";
+import { DebugTurnTrace } from "../models/DebugTurnTrace";
 
 class ChatHistoryStorage {
     private readonly chatHistorySessions: ChatHistorySession[] = [];
 
-    archiveConversation(conversationId: string, messages: readonly ChatMessage[]): void {
+    archiveConversation(
+        conversationId: string,
+        messages: readonly ChatMessage[],
+        debugTraces: readonly DebugTurnTrace[] = []
+    ): void {
         const sanitizedMessages = messages.map((chatMessage) => ({ ...chatMessage }));
+        const sanitizedDebugTraces = debugTraces.map((debugTrace) => ({ ...debugTrace }));
         const sessionTitle = this.buildSessionTitle(sanitizedMessages);
 
         const nextSession: ChatHistorySession = {
             conversationId,
             title: sessionTitle,
             updatedAt: Date.now(),
-            messages: sanitizedMessages
+            messages: sanitizedMessages,
+            debugTraces: sanitizedDebugTraces
         };
 
         const existingSessionIndex = this.chatHistorySessions.findIndex(
@@ -42,7 +49,8 @@ class ChatHistoryStorage {
 
         return {
             ...foundSession,
-            messages: foundSession.messages.map((chatMessage) => ({ ...chatMessage }))
+            messages: foundSession.messages.map((chatMessage) => ({ ...chatMessage })),
+            debugTraces: foundSession.debugTraces.map((debugTrace) => ({ ...debugTrace }))
         };
     }
 

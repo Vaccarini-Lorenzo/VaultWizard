@@ -1,11 +1,13 @@
 import { App } from "obsidian";
 import { ChatMessage } from "../models/ChatMessage";
+import { DebugTurnTrace } from "../models/DebugTurnTrace";
 import { ChatPersistenceProvider, PersistedConversation } from "./ChatPersistenceProvider";
 import path from "path";
 
 interface LocalChatPersistenceProviderOptions {
     folderPath?: string;
     resolveConversationMessages: (conversationId: string) => readonly ChatMessage[] | null;
+    resolveConversationDebugTraces: (conversationId: string) => readonly DebugTurnTrace[] | null;
 }
 
 interface VaultAdapterListResult {
@@ -26,15 +28,18 @@ interface PersistedConversationFilePayload {
     title: string;
     updatedAt: number;
     messages: ChatMessage[];
+    debugTraces?: DebugTurnTrace[];
 }
 
 export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
     private readonly chatFolderPath: string;
     private readonly resolveConversationMessages: (conversationId: string) => readonly ChatMessage[] | null;
+    private readonly resolveConversationDebugTraces: (conversationId: string) => readonly DebugTurnTrace[] | null;
 
     constructor(private readonly app: App, options: LocalChatPersistenceProviderOptions) {
         this.chatFolderPath = options.folderPath?.trim() || path.join(".obsidian", "plugins", "vault_wizard", "chats");
         this.resolveConversationMessages = options.resolveConversationMessages;
+        this.resolveConversationDebugTraces = options.resolveConversationDebugTraces;
     }
 
     async getMostRecent(maxConversationCount: number): Promise<readonly PersistedConversation[]> {
@@ -65,13 +70,15 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
         const messagesToPersist = this.resolveConversationMessages(conversationId);
         if (!messagesToPersist) return;
 
+        const debugTracesToPersist = this.resolveConversationDebugTraces(conversationId) ?? [];
         const existingConversation = await this.get(conversationId);
 
         const persistedConversation: PersistedConversation = {
             conversationId,
             title: this.buildConversationTitle(messagesToPersist),
             updatedAt: this.resolveConversationUpdatedAt(messagesToPersist, existingConversation?.updatedAt),
-            messages: messagesToPersist.map((chatMessage) => ({ ...chatMessage }))
+            messages: messagesToPersist.map((chatMessage) => ({ ...chatMessage })),
+            debugTraces: debugTracesToPersist.map((debugTrace) => ({ ...debugTrace }))
         };
 
         const vaultAdapter = this.getVaultAdapter();
@@ -82,7 +89,8 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
             conversationId: persistedConversation.conversationId,
             title: persistedConversation.title,
             updatedAt: persistedConversation.updatedAt,
-            messages: persistedConversation.messages
+            messages: persistedConversation.messages,
+            debugTraces: persistedConversation.debugTraces
         };
 
         await vaultAdapter.write(conversationFilePath, JSON.stringify(payload, null, 2));
@@ -121,11 +129,16 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
                 return null;
             }
 
+            const normalizedDebugTraces = Array.isArray(parsedPayload.debugTraces)
+                ? parsedPayload.debugTraces.map((debugTrace) => ({ ...debugTrace }))
+                : [];
+
             return {
                 conversationId: parsedPayload.conversationId,
                 title: parsedPayload.title,
                 updatedAt: parsedPayload.updatedAt,
-                messages: parsedPayload.messages.map((chatMessage) => ({ ...chatMessage }))
+                messages: parsedPayload.messages.map((chatMessage) => ({ ...chatMessage })),
+                debugTraces: normalizedDebugTraces
             };
         } catch {
             return null;

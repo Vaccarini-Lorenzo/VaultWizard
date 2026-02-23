@@ -192,6 +192,10 @@ export class ChatController {
             existingSession.conversationId,
             existingSession.messages.map((chatMessage) => ({ ...chatMessage }))
         );
+        debugTraceStorage.replaceTraces(
+            existingSession.conversationId,
+            existingSession.debugTraces.map((debugTrace) => ({ ...debugTrace }))
+        );
         this.streaming = false;
         this.notify();
     }
@@ -387,7 +391,8 @@ export class ChatController {
             conversationId: persistedConversation.conversationId,
             title: persistedConversation.title,
             updatedAt: persistedConversation.updatedAt,
-            messages: persistedConversation.messages.map((chatMessage) => ({ ...chatMessage }))
+            messages: persistedConversation.messages.map((chatMessage) => ({ ...chatMessage })),
+            debugTraces: persistedConversation.debugTraces.map((debugTrace) => ({ ...debugTrace }))
         }));
     }
 

@@ -1,5 +1,6 @@
 import { App } from "obsidian";
 import { ChatMessage } from "../models/ChatMessage";
+import { DebugTurnTrace } from "../models/DebugTurnTrace";
 import {
     ChatPersistenceProvider as ChatPersistenceProviderContract,
     PersistedConversation
@@ -24,6 +25,7 @@ export type PersistenceConfiguration =
 interface PersistenceControllerDependencies {
     app: App;
     resolveConversationMessages: (conversationId: string) => readonly ChatMessage[] | null;
+    resolveConversationDebugTraces: (conversationId: string) => readonly DebugTurnTrace[] | null;
 }
 
 export class PersistenceController {
@@ -64,7 +66,8 @@ export class PersistenceController {
     private createLocalProvider(folderPath?: string): ChatPersistenceProviderContract {
         return new LocalChatPersistenceProvider(this.dependencies.app, {
             folderPath,
-            resolveConversationMessages: this.dependencies.resolveConversationMessages
+            resolveConversationMessages: this.dependencies.resolveConversationMessages,
+            resolveConversationDebugTraces: this.dependencies.resolveConversationDebugTraces
         });
     }
 }
