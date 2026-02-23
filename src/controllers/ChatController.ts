@@ -11,23 +11,34 @@ import { ModelSettingsRepository } from "../services/ModelSettingsRepository";
 import { NoteService } from "../services/NoteService";
 import { SelectedModelState } from "../state/SelectedModelState";
 import { LLMController } from "./LLMController";
+import {
+    ChatPersistenceProvider,
+    ChatPersistenceSettings,
+    createDefaultChatPersistenceSettings
+} from "../models/ChatPersistenceSettings";
+import { ChatHistorySession } from "../models/ChatHistorySession";
+import { PersistenceController } from "./PersistenceController";
 
 type Listener = () => void;
 
 export class ChatController {
     private readonly listeners = new Set<Listener>();
     private readonly configuredModels: ConfiguredModel[] = [];
+    private readonly maxChatHistorySessions = 50;
 
     private activePanel: UiPanel = "chat";
     private streaming = false;
     private conversationId: string;
+    private chatPersistenceSettings: ChatPersistenceSettings = createDefaultChatPersistenceSettings();
+    private chatHistorySessions: ChatHistorySession[] = [];
 
     constructor(
         private readonly noteService: NoteService,
         private readonly llmController: LLMController,
         private readonly modelSettingsRepository: ModelSettingsRepository,
         private readonly selectedModelState: SelectedModelState,
-        private readonly conversationIdFactory: ConversationIdFactory
+        private readonly conversationIdFactory: ConversationIdFactory,
+        private readonly persistenceController: PersistenceController
     ) {
         this.conversationId = this.conversationIdFactory.createConversationId();
         currentChatStorage.clear(this.conversationId);
@@ -44,6 +55,8 @@ export class ChatController {
             this.selectedModelState.setSelectedModel(null);
         }
 
+        this.applyLocalPersistenceConfiguration();
+        await this.refreshChatHistorySessions();
         this.notify();
     }
 
@@ -57,6 +70,8 @@ export class ChatController {
     }
 
     resetChatAndStartNewConversation(): void {
+        this.persistCurrentConversationIfNeeded();
+
         this.conversationId = this.conversationIdFactory.createConversationId();
         currentChatStorage.clear(this.conversationId);
         debugTraceStorage.clear(this.conversationId);
@@ -98,6 +113,87 @@ export class ChatController {
 
     getAggregateTokenUsage(): TokenUsage {
         return debugTraceStorage.getAggregateTokenUsage();
+    }
+
+    getChatPersistenceSettings(): ChatPersistenceSettings {
+        return this.clonePersistenceSettings(this.chatPersistenceSettings);
+    }
+
+    setChatPersistenceProvider(provider: ChatPersistenceProvider): void {
+        if (provider === this.chatPersistenceSettings.provider) return;
+
+        if (provider === "local") {
+            this.chatPersistenceSettings = {
+                provider: "local",
+                useCustomFolderPath: false,
+                folderPath: ""
+            };
+
+            this.applyLocalPersistenceConfiguration();
+            this.notify();
+            return;
+        }
+
+        this.chatPersistenceSettings = {
+            provider: "cosmosDB",
+            endpoint: "",
+            key: "",
+            databaseId: "",
+            containerId: ""
+        };
+
+        this.notify();
+    }
+
+    updateLocalChatPersistenceSettings(nextValues: {
+        useCustomFolderPath?: boolean;
+        folderPath?: string;
+    }): void {
+        if (this.chatPersistenceSettings.provider !== "local") return;
+
+        this.chatPersistenceSettings = {
+            ...this.chatPersistenceSettings,
+            ...nextValues
+        };
+
+        this.applyLocalPersistenceConfiguration();
+        this.notify();
+    }
+
+    updateCosmosDbChatPersistenceSettings(nextValues: {
+        endpoint?: string;
+        key?: string;
+        databaseId?: string;
+        containerId?: string;
+    }): void {
+        if (this.chatPersistenceSettings.provider !== "cosmosDB") return;
+
+        this.chatPersistenceSettings = {
+            ...this.chatPersistenceSettings,
+            ...nextValues
+        };
+        this.notify();
+    }
+
+    getChatHistorySessions(): readonly ChatHistorySession[] {
+        return this.chatHistorySessions;
+    }
+
+    openConversationFromHistory(conversationId: string): void {
+        const existingSession = this.chatHistorySessions.find(
+            (chatHistorySession) => chatHistorySession.conversationId === conversationId
+        );
+        if (!existingSession) return;
+
+        this.persistCurrentConversationIfNeeded();
+
+        this.conversationId = existingSession.conversationId;
+        currentChatStorage.replaceConversation(
+            existingSession.conversationId,
+            existingSession.messages.map((chatMessage) => ({ ...chatMessage }))
+        );
+        this.streaming = false;
+        this.notify();
     }
 
     async saveConfiguredModel(newConfiguredModelInput: NewConfiguredModelInput): Promise<void> {
@@ -147,7 +243,6 @@ export class ChatController {
     async onUserMessage(rawInput: string): Promise<void> {
         const input = rawInput.trim();
         const context = await this.noteService.getContext();
-        console.log(context)
 
         if (!input || this.streaming) return;
 
@@ -159,19 +254,21 @@ export class ChatController {
 
         if (input === "/c") {
             currentChatStorage.appendMessage({
-                role: "tool",
+                role: "developer",
                 content: context,
                 timestamp: Date.now()
             });
+            this.persistCurrentConversationIfNeeded();
             this.notify();
             return;
         }
 
         const contextMessage: ChatMessage = {
-            role: "tool",
+            role: "developer",
             content: context,
             timestamp: Date.now()
         };
+        
         currentChatStorage.appendMessage(contextMessage);
 
         const assistantMessage: ChatMessage = {
@@ -185,7 +282,6 @@ export class ChatController {
         const selectedContextSnapshot = this.serializeSelectedContext(selectedContextStorage.getSelection());
         const selectedConfiguredModel = this.selectedModelState.getSelectedModel();
 
-        // Clear the selected context so that the badge disappears. The context has been crafted anyways
         selectedContextStorage.clear();
 
         this.streaming = true;
@@ -228,6 +324,7 @@ export class ChatController {
             });
 
             this.streaming = false;
+            this.persistCurrentConversationIfNeeded();
             this.notify();
         }
     }
@@ -257,5 +354,55 @@ export class ChatController {
         } catch {
             return String(selectedContext);
         }
+    }
+
+    private clonePersistenceSettings(
+        chatPersistenceSettings: ChatPersistenceSettings
+    ): ChatPersistenceSettings {
+        return JSON.parse(JSON.stringify(chatPersistenceSettings)) as ChatPersistenceSettings;
+    }
+
+    private persistCurrentConversationIfNeeded(): void {
+        const chatMessages = currentChatStorage.getMessages();
+        const hasUserOrAssistantMessage = chatMessages.some((chatMessage) => {
+            return chatMessage.role === "user" || chatMessage.role === "assistant";
+        });
+
+        if (!hasUserOrAssistantMessage) return;
+
+        const conversationIdToPersist = this.conversationId;
+
+        void this.persistenceController
+            .update(conversationIdToPersist)
+            .then(async () => {
+                await this.refreshChatHistorySessions();
+            })
+            .catch(() => undefined);
+    }
+
+    private async refreshChatHistorySessions(): Promise<void> {
+        const persistedConversations = await this.persistenceController.getMostRecent(this.maxChatHistorySessions);
+
+        this.chatHistorySessions = persistedConversations.map((persistedConversation) => ({
+            conversationId: persistedConversation.conversationId,
+            title: persistedConversation.title,
+            updatedAt: persistedConversation.updatedAt,
+            messages: persistedConversation.messages.map((chatMessage) => ({ ...chatMessage }))
+        }));
+    }
+
+    private applyLocalPersistenceConfiguration(): void {
+        if (this.chatPersistenceSettings.provider !== "local") return;
+
+        const customFolderPath = this.chatPersistenceSettings.useCustomFolderPath
+            ? this.chatPersistenceSettings.folderPath.trim()
+            : "";
+
+        this.persistenceController.configure({
+            provider: "local",
+            folderPath: customFolderPath || undefined
+        });
+
+        void this.refreshChatHistorySessions();
     }
 }

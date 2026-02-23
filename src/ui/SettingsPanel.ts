@@ -1,4 +1,5 @@
 import { ChatController } from "../controllers/ChatController";
+import { renderPersistenceSettingsForm } from "./components/PersistenceSettingsForm";
 
 export function renderSettingsPanel(container: HTMLElement, controller: ChatController) {
     const settingsWrapper = container.createDiv({ cls: "vault-wizard-settings-wrap" });
@@ -47,6 +48,8 @@ export function renderSettingsPanel(container: HTMLElement, controller: ChatCont
             });
         }
     }
+
+    renderPersistenceSettingsForm(settingsWrapper, controller);
 
     const actionsWrapper = settingsWrapper.createDiv({ cls: "vault-wizard-settings-actions" });
     const addModelButton = actionsWrapper.createEl("button", {

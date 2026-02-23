@@ -91,9 +91,9 @@ export class AzureAIInvoker implements AIInvoker {
         const messages = currentChatStorage.getMessages().map(msg => {
             let role = msg.role;
             let content = msg.content;
-            if (role == "tool"){
-                role = "user"
-                content = `<CONTEXT>\n${content}\n</CONTEXT>`
+            if (role == "developer"){
+                role = "developer"
+                content = content
             }
             return { role, content };
         });

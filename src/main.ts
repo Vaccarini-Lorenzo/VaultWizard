@@ -9,6 +9,8 @@ import { LLMController } from "./controllers/LLMController";
 import { AIInvokerFactory } from "./llm/AIInvokerFactory";
 import { AzureAIInvoker } from "./llm/invokers/azure/AzureAIInvoker";
 import { ConversationIdFactory } from "./services/ConversationIdFactory";
+import { PersistenceController } from "./controllers/PersistenceController";
+import { currentChatStorage } from "./services/CurrentChatStorage";
 
 export default class ObsidianAiHelperPlugin extends Plugin {
     private controller!: ChatController;
@@ -21,12 +23,21 @@ export default class ObsidianAiHelperPlugin extends Plugin {
         const llmController = new LLMController(selectedModelState, aiInvokerFactory);
         const conversationIdFactory = new ConversationIdFactory();
 
+        const persistenceController = new PersistenceController({
+            app: this.app,
+            resolveConversationMessages: (conversationId: string) => {
+                if (currentChatStorage.conversationId !== conversationId) return null;
+                return currentChatStorage.getMessages();
+            }
+        });
+
         this.controller = new ChatController(
             noteService,
             llmController,
             modelSettingsRepository,
             selectedModelState,
-            conversationIdFactory
+            conversationIdFactory,
+            persistenceController
         );
         await this.controller.initialize();
 
@@ -43,7 +54,6 @@ export default class ObsidianAiHelperPlugin extends Plugin {
         this.registerDomEvent(document, "selectionchange", () => {
             noteService.captureSelectionFromActiveNote();
         });
-
 
         this.registerView(VIEW_TYPE_AI_HELPER, (leaf) => {
             return new ChatView(leaf, this.controller);
@@ -99,5 +109,4 @@ export default class ObsidianAiHelperPlugin extends Plugin {
     private async newChatCommand(): Promise<void> {
         this.controller.resetChatAndStartNewConversation();
     }
-
 }

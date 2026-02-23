@@ -529,3 +529,167 @@
     max-height: 34vh;
     overflow: auto;
 }
+
+.vault-wizard-chat-layout {
+    display: flex;
+    gap: 8px;
+    min-height: 0;
+    flex: 1;
+}
+
+.vault-wizard-chat-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+}
+
+/* ===== Chat layout fix (prevents compression) ===== */
+.vault-wizard-chat-header-shell {
+    flex: 0 0 auto;
+}
+
+.vault-wizard-chat-body-shell {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+}
+
+.vault-wizard-chat-body-shell .vault-wizard-chat-main {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+}
+
+/* Keep message list full width even when history is open */
+.vault-wizard-chat-body-shell.is-history-open .vault-wizard-message-list {
+    padding-right: 4px;
+}
+
+/* =========================================
+   History sidebar + items (single definition)
+   ========================================= */
+
+.vault-wizard-history-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: flex;
+    justify-content: flex-end;
+    align-items: stretch;
+    z-index: 20;
+}
+
+.vault-wizard-history-sidebar {
+    pointer-events: auto;
+    width: min(340px, 44vw);
+    min-width: 280px;
+    max-height: calc(100% - 16px);
+    margin: 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 12px;
+    background: var(--background-primary);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    animation: vault-wizard-history-slide-in 160ms ease-out;
+}
+
+@keyframes vault-wizard-history-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.vault-wizard-history-header {
+    flex: 0 0 auto;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+}
+
+.vault-wizard-history-title {
+    margin: 0;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.vault-wizard-history-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+}
+
+.vault-wizard-history-empty {
+    text-align: left;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 12px;
+}
+
+.vault-wizard-history-item {
+    width: 100%;
+    min-height: 72px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+    background: var(--background-secondary);
+    text-align: left;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: none;
+    transform: none;
+    transition: none;
+}
+
+.vault-wizard-history-item:hover {
+    border-color: var(--background-modifier-border);
+    background: var(--background-secondary);
+    box-shadow: none;
+    transform: none;
+}
+
+.vault-wizard-history-item.is-active {
+    border: 1px solid #ffffff;
+}
+
+.vault-wizard-history-item-title {
+    width: 100%;
+    text-align: left;
+    color: var(--text-normal);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.vault-wizard-history-item-time {
+    width: 100%;
+    text-align: left;
+    color: var(--text-muted);
+    font-size: 11px;
+}

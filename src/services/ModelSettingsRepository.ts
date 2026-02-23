@@ -1,15 +1,22 @@
 import { App } from "obsidian";
 import { ConfiguredModel } from "../models/ConfiguredModel";
+import path from "path";
 
 interface ModelSettingsFileContent {
     models: ConfiguredModel[];
 }
 
 export class ModelSettingsRepository {
-    private readonly settingsFilePath = ".obsidian/plugins/vault_wizard/.model_settings.json";
-    private readonly pluginFolderPath = ".obsidian/plugins/vault_wizard";
 
-    constructor(private readonly app: App) {}
+    private readonly settingsFilePath: string;
+    private readonly pluginFolderPath: string;
+
+    constructor(private readonly app: App) {
+        const basePath = (this.app.vault.adapter as any)?.basePath ?? (window as any)?.app?.vault?.adapter?.basePath;
+        this.pluginFolderPath = path.join(".obsidian", "plugins", "vault_wizard");
+        this.settingsFilePath = path.join(this.pluginFolderPath, ".model_settings.json");
+        console.log("ModelSettingsRepository initialized with settings file path:", this.settingsFilePath);
+    }
 
     async loadModels(): Promise<ConfiguredModel[]> {
         const vaultAdapter = this.app.vault.adapter as any;

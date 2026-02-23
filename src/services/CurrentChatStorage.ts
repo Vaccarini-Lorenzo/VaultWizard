@@ -1,7 +1,7 @@
 import { ChatMessage } from "models/ChatMessage";
 
 class CurrentChatStorage {
-    public messages: ChatMessage[]
+    public messages: ChatMessage[];
     public conversationId: string;
 
     constructor() {
@@ -51,10 +51,20 @@ class CurrentChatStorage {
         this.appendSystemMessage();
     }
 
+    replaceConversation(conversationId: string, messages: readonly ChatMessage[]): void {
+        this.conversationId = conversationId;
+        this.messages = messages.map((chatMessage) => ({ ...chatMessage }));
+
+        const hasSystemMessage = this.messages.some((chatMessage) => chatMessage.role === "system");
+        if (!hasSystemMessage) {
+            this.appendSystemMessage();
+        }
+    }
+
     getMessages() {
         return this.messages;
     }
-    
+
     appendMessage(message: ChatMessage) {
         this.messages.push(message);
     }

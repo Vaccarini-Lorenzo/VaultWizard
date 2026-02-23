@@ -8,7 +8,8 @@ export function renderChatHeader(
     configuredModels: readonly ConfiguredModel[],
     selectedConfiguredModelId: string | null,
     onSelectConfiguredModel: (configuredModelId: string) => void,
-    onNewChat: () => void
+    onNewChat: () => void,
+    onToggleHistorySidebar: () => void
 ) {
     const header = container.createDiv({ cls: "vault-wizard-header" });
     header.createEl("h3", { text: "Vault Wizard", cls: "vault-wizard-title" });
@@ -44,6 +45,15 @@ export function renderChatHeader(
             onSelectConfiguredModel(modelSelect.value);
         });
     }
+
+    const historyButton = controlsWrapper.createEl("button", {
+        cls: "vault-wizard-icon-btn",
+        text: "Chats"
+    });
+    historyButton.setAttribute("aria-label", "Toggle older chats sidebar");
+    setIcon(historyButton, "history");
+    historyButton.appendText(" Chats");
+    historyButton.addEventListener("click", onToggleHistorySidebar);
 
     const newChatButton = controlsWrapper.createEl("button", {
         cls: "vault-wizard-icon-btn vault-wizard-new-chat-btn"

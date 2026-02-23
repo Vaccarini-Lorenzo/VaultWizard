@@ -31,7 +31,8 @@ export function renderMessageList(
     });
 
     for (const chatMessage of messages) {
-        if (chatMessage.role === "system" || chatMessage.role === "tool") {
+        
+        if (chatMessage.role === "system" || chatMessage.role === "developer") {
             continue;
         }
 
