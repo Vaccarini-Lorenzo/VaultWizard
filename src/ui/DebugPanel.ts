@@ -1,3 +1,4 @@
+import { currentChatStorage } from "services/CurrentChatStorage";
 import { ChatController } from "../controllers/ChatController";
 
 export function renderDebugPanel(container: HTMLElement, controller: ChatController) {
@@ -11,7 +12,7 @@ export function renderDebugPanel(container: HTMLElement, controller: ChatControl
 
     const pre = wrap.createEl("pre", { cls: "vault-wizard-debug-pre" });
     const state = {
-        messageCount: controller.getMessages().length,
+        messageCount: currentChatStorage.getMessages().length,
         streaming: controller.isStreaming(),
         activeNotePath: controller.getActiveNotePath(),
         configuredModels: controller.getConfiguredModels().length

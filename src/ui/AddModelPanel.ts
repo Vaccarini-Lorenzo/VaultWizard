@@ -5,7 +5,7 @@ import { renderProviderFields } from "./components/ProviderFields";
 
 function collectProviderSettings(providerFieldsContainer: HTMLElement): Record<string, string> {
     const providerSettings: Record<string, string> = {};
-    const providerInputs = providerFieldsContainer.querySelectorAll<HTMLInputElement>("input[data-setting-key]");
+    const providerInputs: any = providerFieldsContainer.querySelectorAll<HTMLInputElement>("input[data-setting-key]");
 
     for (const providerInput of providerInputs) {
         const settingKey = providerInput.dataset.settingKey;

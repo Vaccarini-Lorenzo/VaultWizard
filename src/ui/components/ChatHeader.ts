@@ -7,7 +7,8 @@ export function renderChatHeader(
     onOpenSettingsPanel: () => void,
     configuredModels: readonly ConfiguredModel[],
     selectedConfiguredModelId: string | null,
-    onSelectConfiguredModel: (configuredModelId: string) => void
+    onSelectConfiguredModel: (configuredModelId: string) => void,
+    onNewChat: () => void
 ) {
     const header = container.createDiv({ cls: "vault-wizard-header" });
     header.createEl("h3", { text: "Vault Wizard", cls: "vault-wizard-title" });
@@ -43,6 +44,13 @@ export function renderChatHeader(
             onSelectConfiguredModel(modelSelect.value);
         });
     }
+
+    const newChatButton = controlsWrapper.createEl("button", {
+        cls: "vault-wizard-icon-btn vault-wizard-new-chat-btn"
+    });
+    newChatButton.setAttribute("aria-label", "Start new chat");
+    setIcon(newChatButton, "plus");
+    newChatButton.addEventListener("click", onNewChat);
 
     const debugButton = controlsWrapper.createEl("button", { cls: "vault-wizard-icon-btn" });
     debugButton.setAttribute("aria-label", "Open debug panel");

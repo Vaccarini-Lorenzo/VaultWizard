@@ -1,28 +1,33 @@
 import { ChatMessage } from "../models/ChatMessage";
 import { ConfiguredModel, NewConfiguredModelInput } from "../models/ConfiguredModel";
 import { UiPanel } from "../models/UiPanel";
-import { ChatService } from "../services/ChatService";
 import { ModelSettingsRepository } from "../services/ModelSettingsRepository";
 import { NoteService } from "../services/NoteService";
+import { ConversationIdFactory } from "../services/ConversationIdFactory";
 import { SelectedModelState } from "../state/SelectedModelState";
 import { LLMController } from "./LLMController";
+import { currentChatStorage } from "services/CurrentChatStorage";
 
 type Listener = () => void;
 
 export class ChatController {
     private readonly listeners = new Set<Listener>();
-    private readonly messages: ChatMessage[] = [];
     private readonly configuredModels: ConfiguredModel[] = [];
 
     private activePanel: UiPanel = "chat";
     private streaming = false;
+    private conversationId: string;
 
     constructor(
         private readonly noteService: NoteService,
         private readonly llmController: LLMController,
         private readonly modelSettingsRepository: ModelSettingsRepository,
-        private readonly selectedModelState: SelectedModelState
-    ) {}
+        private readonly selectedModelState: SelectedModelState,
+        private readonly conversationIdFactory: ConversationIdFactory
+    ) {
+        this.conversationId = this.conversationIdFactory.createConversationId();
+        currentChatStorage.clear(this.conversationId);
+    }
 
     async initialize(): Promise<void> {
         const loadedConfiguredModels = await this.modelSettingsRepository.loadModels();
@@ -42,8 +47,14 @@ export class ChatController {
         return () => this.listeners.delete(listener);
     }
 
-    getMessages(): ChatMessage[] {
-        return this.messages;
+    getConversationId(): string {
+        return this.conversationId;
+    }
+
+    resetChatAndStartNewConversation(): void {
+        this.conversationId = this.conversationIdFactory.createConversationId();
+        currentChatStorage.clear(this.conversationId);
+        this.notify();
     }
 
     getConfiguredModels(): readonly ConfiguredModel[] {
@@ -123,17 +134,17 @@ export class ChatController {
         if (!input || this.streaming) return;
 
         if (input === "/c") {
-            const content = await this.noteService.getActiveNoteContent();
-            this.messages.push({
+            const context = await this.noteService.getActiveNoteContent();
+            currentChatStorage.appendMessage({
                 role: "assistant",
-                content,
+                content: context,
                 timestamp: Date.now()
             });
             this.notify();
             return;
         }
 
-        this.messages.push({
+        currentChatStorage.appendMessage({
             role: "user",
             content: input,
             timestamp: Date.now()
@@ -144,13 +155,15 @@ export class ChatController {
             content: "",
             timestamp: Date.now()
         };
-        this.messages.push(assistantMessage);
+
+        currentChatStorage.appendMessage(assistantMessage);
 
         this.streaming = true;
         this.notify();
 
         try {
-            await this.llmController.streamAssistantReply(input, (chunk) => {
+            const context = await this.noteService.getContext();
+            await this.llmController.streamAssistantReply(input, context, (chunk) => {
                 assistantMessage.content += chunk;
                 this.notify();
             });

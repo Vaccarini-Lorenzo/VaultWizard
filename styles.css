@@ -247,3 +247,7 @@
     height: 30px;
     font-size: 12px;
 }
+
+.vault-wizard-new-chat-btn {
+    color: var(--text-accent);
+}

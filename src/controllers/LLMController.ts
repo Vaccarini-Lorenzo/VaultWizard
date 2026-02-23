@@ -8,7 +8,8 @@ export class LLMController {
     ) {}
 
     async streamAssistantReply(
-        userMessage: string,
+        newUserMessage: string,
+        context: string | undefined,
         onChunk: (chunk: string) => void
     ): Promise<void> {
         const selectedModel = this.selectedModelState.getSelectedModel();
@@ -18,6 +19,6 @@ export class LLMController {
         }
 
         const aiInvoker = this.aiInvokerFactory.getInvoker(selectedModel.provider);
-        await aiInvoker.streamResponse({ userMessage, configuredModel: selectedModel }, onChunk);
+        await aiInvoker.streamResponse({ newUserMessage, context, configuredModel: selectedModel }, onChunk);
     }
 }

@@ -1,7 +1,8 @@
 import { ConfiguredModel } from "../../models/ConfiguredModel";
 
 export interface AIInvokerInput {
-    userMessage: string;
+    newUserMessage: string;
+    context?: string;
     configuredModel: ConfiguredModel;
 }
 

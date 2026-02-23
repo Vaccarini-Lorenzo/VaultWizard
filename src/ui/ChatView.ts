@@ -7,6 +7,7 @@ import { renderSettingsPanel } from "./SettingsPanel";
 import { renderChatComposer } from "./components/ChatComposer";
 import { renderChatHeader } from "./components/ChatHeader";
 import { renderMessageList } from "./components/MessageList";
+import { currentChatStorage } from "services/CurrentChatStorage";
 
 export class ChatView extends ItemView {
     private unsubscribe?: () => void;
@@ -69,10 +70,11 @@ export class ChatView extends ItemView {
             () => this.controller.openSettingsPanel(),
             this.controller.getConfiguredModels(),
             selectedConfiguredModel?.id ?? null,
-            (configuredModelId) => this.controller.selectConfiguredModelById(configuredModelId)
+            (configuredModelId) => this.controller.selectConfiguredModelById(configuredModelId),
+            () => this.controller.resetChatAndStartNewConversation()
         );
 
-        renderMessageList(contentEl, this.controller.getMessages());
+        renderMessageList(contentEl, currentChatStorage.getMessages());
         renderChatComposer(
             contentEl,
             async (value) => this.controller.onUserMessage(value),

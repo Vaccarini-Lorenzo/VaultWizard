@@ -9,6 +9,10 @@ export class NoteService {
         return this.app.vault.cachedRead(file);
     }
 
+    async getContext(): Promise<string> {
+        return "todo"
+    }
+
     getActiveNotePath(): string {
         const file = this.app.workspace.getActiveFile();
         return file?.path ?? "(none)";
