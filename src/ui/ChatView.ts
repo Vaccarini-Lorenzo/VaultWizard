@@ -11,6 +11,7 @@ import { currentChatStorage } from "services/CurrentChatStorage";
 
 export class ChatView extends ItemView {
     private unsubscribe?: () => void;
+    private isOpen = false;
 
     constructor(
         leaf: WorkspaceLeaf,
@@ -21,6 +22,14 @@ export class ChatView extends ItemView {
 
     getViewType(): string {
         return VIEW_TYPE_AI_HELPER;
+    }
+
+    getOpenStatus(): boolean {
+        return this.isOpen;
+    }
+
+    setOpenStatus(isOpen: boolean): void {
+        this.isOpen = isOpen;
     }
 
     getDisplayText(): string {

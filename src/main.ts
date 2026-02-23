@@ -57,6 +57,14 @@ export default class ObsidianAiHelperPlugin extends Plugin {
                 await this.toggleChat();
             }
         });
+
+        this.addCommand({
+            id: "vault-wizard-new-chat",
+            name: "Vault Wizard New Chat",
+            callback: async () => {
+                await this.newChatCommand();
+            }
+        });
     }
 
     onunload() {
@@ -84,4 +92,9 @@ export default class ObsidianAiHelperPlugin extends Plugin {
 
         this.app.workspace.revealLeaf(rightLeaf);
     }
+
+    private async newChatCommand(): Promise<void> {
+        this.controller.resetChatAndStartNewConversation();
+    }
+
 }

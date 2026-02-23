@@ -59,6 +59,7 @@ export class ChatController {
         this.conversationId = this.conversationIdFactory.createConversationId();
         currentChatStorage.clear(this.conversationId);
         debugTraceStorage.clear(this.conversationId);
+        this.streaming = false;
         this.notify();
     }
 
