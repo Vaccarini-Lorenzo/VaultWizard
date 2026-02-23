@@ -147,6 +147,7 @@ export class ChatController {
     async onUserMessage(rawInput: string): Promise<void> {
         const input = rawInput.trim();
         const context = await this.noteService.getContext();
+        console.log(context)
 
         if (!input || this.streaming) return;
 
@@ -180,6 +181,10 @@ export class ChatController {
         };
 
         currentChatStorage.appendMessage(assistantMessage);
+
+        const selectedContextSnapshot = this.serializeSelectedContext(selectedContextStorage.getSelection());
+        const selectedConfiguredModel = this.selectedModelState.getSelectedModel();
+
         // Clear the selected context so that the badge disappears. The context has been crafted anyways
         selectedContextStorage.clear();
 
@@ -187,6 +192,7 @@ export class ChatController {
         this.notify();
 
         let capturedTokenUsage: TokenUsage | null = null;
+        let capturedErrorMessage: string | null = null;
 
         try {
             const invocationResult = await this.llmController.streamAssistantReply(input, (chunk) => {
@@ -196,15 +202,29 @@ export class ChatController {
 
             capturedTokenUsage = invocationResult.tokenUsage ?? null;
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : "Unexpected LLM error.";
-            assistantMessage.content += `\n${errorMessage}`;
+            capturedErrorMessage = error instanceof Error ? error.message : "Unexpected LLM error.";
+            assistantMessage.content += `\n${capturedErrorMessage}`;
         } finally {
             debugTraceStorage.appendTrace({
                 timestamp: Date.now(),
                 userPrompt: input,
                 context,
                 assistantResponse: assistantMessage.content,
-                tokenUsage: capturedTokenUsage
+                tokenUsage: capturedTokenUsage,
+                request: {
+                    prompt: input,
+                    context,
+                    selectedContext: selectedContextSnapshot
+                },
+                responseMetadata: {
+                    conversationId: this.conversationId,
+                    provider: selectedConfiguredModel?.provider ?? null,
+                    modelName: selectedConfiguredModel?.modelName ?? null,
+                    configuredModelId: selectedConfiguredModel?.id ?? null,
+                    completedAt: Date.now(),
+                    hadError: capturedErrorMessage !== null,
+                    errorMessage: capturedErrorMessage
+                }
             });
 
             this.streaming = false;
@@ -220,5 +240,22 @@ export class ChatController {
 
     private notify(): void {
         for (const listener of this.listeners) listener();
+    }
+
+    private serializeSelectedContext(selectedContext: unknown): string | null {
+        if (selectedContext === null || selectedContext === undefined) {
+            return null;
+        }
+
+        if (typeof selectedContext === "string") {
+            const trimmedSelectedContext = selectedContext.trim();
+            return trimmedSelectedContext.length > 0 ? trimmedSelectedContext : null;
+        }
+
+        try {
+            return JSON.stringify(selectedContext, null, 2);
+        } catch {
+            return String(selectedContext);
+        }
     }
 }

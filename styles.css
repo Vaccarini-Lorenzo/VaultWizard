@@ -453,3 +453,79 @@
     font-weight: 600;
     white-space: nowrap;
 }
+
+.vault-wizard-debug-trace-card-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.vault-wizard-debug-expand-btn {
+    min-width: 30px;
+    min-height: 28px;
+    padding: 4px 8px;
+    font-size: 13px;
+    line-height: 1;
+    transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.vault-wizard-debug-expand-btn:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--interactive-accent) 45%, var(--background-modifier-border));
+    background: color-mix(in srgb, var(--interactive-accent) 14%, var(--background-secondary));
+}
+
+.vault-wizard-debug-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    background: color-mix(in srgb, #000 56%, transparent);
+    backdrop-filter: blur(2px);
+}
+
+.vault-wizard-debug-modal {
+    width: min(980px, 96vw);
+    max-height: 92vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-radius: 14px;
+    border: 1px solid color-mix(in srgb, var(--interactive-accent) 20%, var(--background-modifier-border));
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--background-secondary) 92%, var(--interactive-accent) 8%),
+        var(--background-primary)
+    );
+    box-shadow:
+        0 12px 34px rgba(0, 0, 0, 0.35),
+        0 1px 0 rgba(255, 255, 255, 0.02) inset;
+    padding: 14px;
+}
+
+.vault-wizard-debug-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.vault-wizard-debug-modal-body {
+    min-height: 0;
+    overflow-y: auto;
+    display: grid;
+    gap: 12px;
+    padding-right: 2px;
+}
+
+.vault-wizard-debug-code-block-large {
+    max-height: 34vh;
+    overflow: auto;
+}

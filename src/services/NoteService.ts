@@ -16,7 +16,7 @@ export class NoteService {
 
     async getActiveNoteContent(): Promise<string> {
         const file = this.app.workspace.getActiveFile();
-        if (!file) return "No active note is open.";
+        if (!file) return "";
         return this.app.vault.cachedRead(file);
     }
 
@@ -63,8 +63,10 @@ export class NoteService {
         let context = "";
         if (this.contextRequired) {
             const activeFileContent = await this.getActiveNoteContent();
-            context += `<NOTE_CONTENT_START>\n${activeFileContent}\n<NOTE_CONTENT_END>`;
-            this.contextRequired = false;
+            if (activeFileContent.trim().length > 0) {
+                context += `<NOTE_CONTENT_START>\n${activeFileContent}\n<NOTE_CONTENT_END>`;
+                this.contextRequired = false;
+            }
         }
 
         const selectedContextSnapshot = selectedContextStorage.getSelection();
@@ -77,7 +79,7 @@ export class NoteService {
 
     getActiveNotePath(): string {
         const file = this.app.workspace.getActiveFile();
-        return file?.path ?? "(none)";
+        return file?.path ?? "none";
     }
 
     private tryGetEditorSelectionSnapshot(): EditorSelectionSnapshot | null {

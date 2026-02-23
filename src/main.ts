@@ -1,7 +1,6 @@
 import { Notice, Plugin } from "obsidian";
 import { VIEW_TYPE_AI_HELPER } from "./constants";
 import { ChatController } from "./controllers/ChatController";
-import { ChatService } from "./services/ChatService";
 import { ModelSettingsRepository } from "./services/ModelSettingsRepository";
 import { NoteService } from "./services/NoteService";
 import { selectedModelState } from "./state/SelectedModelState";
