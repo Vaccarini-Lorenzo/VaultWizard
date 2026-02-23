@@ -38,7 +38,7 @@ class CurrentChatStorage {
                 "",
                 "Notes",
                 "- If SELECTED_CONTEXT is provided, it is more relevant than the general NOTE_CONTENT. Always prioritize it when formulating your response.",
-                "- When providing copy-paste snippets, ensure they are wrapped in ```...```"
+                "- When providing copy-paste snippets, ensure they are wrapped in ```...```. This applies everytime you provide some content that could be pasted in the current notes.",
             ].join("\n"),
         });
     }
