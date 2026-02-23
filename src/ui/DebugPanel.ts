@@ -163,10 +163,10 @@ function buildFullRequest(debugTrace: DebugTurnTrace): string {
 
     return [
         "prompt:",
-        promptText || "(empty prompt)",
+        promptText || "none... wait how?",
         "",
         "context:",
-        contextText || "(no context)",
+        contextText || "none",
         "",
         "selected context:",
         selectedContextText
