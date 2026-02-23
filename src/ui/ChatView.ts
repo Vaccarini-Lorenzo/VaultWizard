@@ -74,7 +74,12 @@ export class ChatView extends ItemView {
             () => this.controller.resetChatAndStartNewConversation()
         );
 
-        renderMessageList(contentEl, currentChatStorage.getMessages());
+        renderMessageList(contentEl, currentChatStorage.getMessages(), {
+            app: this.app,
+            component: this,
+            sourcePath: this.controller.getActiveNotePath()
+        });
+
         renderChatComposer(
             contentEl,
             async (value) => this.controller.onUserMessage(value),

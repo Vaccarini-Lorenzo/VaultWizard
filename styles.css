@@ -100,31 +100,107 @@
 .vault-wizard-message-list {
     flex: 1;
     overflow-y: auto;
-    padding-right: 4px;
+    padding: 2px 4px 2px 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vault-wizard-message-row {
+    display: flex;
+    width: 100%;
+}
+
+.vault-wizard-message-row-user {
+    justify-content: flex-end;
+}
+
+.vault-wizard-message-row-assistant {
+    justify-content: flex-start;
+}
+
+.vault-wizard-message {
+    padding: 10px 12px;
+    border-radius: 12px;
+    max-width: 92%;
+    user-select: text;
+    white-space: normal;
+    word-break: break-word;
+    border: 1px solid var(--background-modifier-border);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-.vault-wizard-message {
-    padding: 8px;
-    border-radius: 8px;
-    max-width: 100%;
-    user-select: text; /* copy-pastable */
-    white-space: pre-wrap;
-    word-break: break-word;
-}
-
 .vault-wizard-user {
     align-self: flex-end;
-    background: var(--interactive-accent);
+    background: color-mix(in srgb, var(--interactive-accent) 92%, black 8%);
     color: var(--text-on-accent);
+    border-color: color-mix(in srgb, var(--interactive-accent) 70%, black 30%);
 }
 
 .vault-wizard-assistant {
     align-self: flex-start;
     background: var(--background-secondary);
     color: var(--text-normal);
+}
+
+.vault-wizard-message-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 11px;
+    opacity: 0.85;
+}
+
+.vault-wizard-message-role {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.vault-wizard-message-time {
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.vault-wizard-message-content {
+    line-height: 1.5;
+}
+
+.vault-wizard-message-content > *:first-child {
+    margin-top: 0;
+}
+
+.vault-wizard-message-content > *:last-child {
+    margin-bottom: 0;
+}
+
+.vault-wizard-message-content pre {
+    border-radius: 10px;
+    padding: 10px 12px;
+    overflow-x: auto;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+}
+
+.vault-wizard-message-content code {
+    border-radius: 6px;
+    padding: 0.12em 0.35em;
+    background: color-mix(in srgb, var(--background-modifier-border) 50%, transparent);
+}
+
+.vault-wizard-message-content pre code {
+    padding: 0;
+    background: transparent;
+}
+
+.vault-wizard-message-content blockquote {
+    border-left: 3px solid var(--interactive-accent);
+    margin: 0.4em 0;
+    padding: 0.2em 0.8em;
+    color: var(--text-muted);
 }
 
 .vault-wizard-composer {
