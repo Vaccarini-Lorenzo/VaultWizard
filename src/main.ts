@@ -87,7 +87,8 @@ export default class ObsidianAiHelperPlugin extends Plugin {
 
         
         this.registerObsidianProtocolHandler(VAULT_WIZARD_CHAT_PROTOCOL_ACTION, async (protocolParams) => {
-            const chatId = resolvechatIdFromProtocolParams(protocolParams);
+            console.log("Received protocol call with params:", protocolParams);
+            const chatId = protocolParams.chatId
             if (!chatId) {
                 new Notice("Conversation not found");
                 return;
