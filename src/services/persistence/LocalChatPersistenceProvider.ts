@@ -75,9 +75,7 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
     async get(chatId: string): Promise<PersistedConversation | null> {
         const vaultAdapter = this.getVaultAdapter();
         const conversationFilePath = this.buildConversationFilePath(chatId);
-        console.log(`Attempting to load conversation from path: ${conversationFilePath}`);
         const fileExists = await vaultAdapter.exists(conversationFilePath);
-        console.log(`File exists: ${fileExists}`);
 
         if (!fileExists) return null;
 

@@ -12,7 +12,6 @@ import { ChatIdFactory } from "./services/chat/ChatIdFactory";
 import { PersistenceController } from "./controllers/PersistenceController";
 import { currentChatStorage } from "./services/chat/CurrentChatStorage";
 import { debugTraceStorage } from "./services/debug/DebugTraceStorage";
-import {resolvechatIdFromProtocolParams,} from "./services/chat/ConversationProtocol";
 
 export default class ObsidianAiHelperPlugin extends Plugin {
     private controller!: ChatController;
@@ -87,7 +86,6 @@ export default class ObsidianAiHelperPlugin extends Plugin {
 
         
         this.registerObsidianProtocolHandler(VAULT_WIZARD_CHAT_PROTOCOL_ACTION, async (protocolParams) => {
-            console.log("Received protocol call with params:", protocolParams);
             const chatId = protocolParams.chatId
             if (!chatId) {
                 new Notice("Conversation not found");

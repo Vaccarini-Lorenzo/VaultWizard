@@ -13,7 +13,6 @@ export function createConversationEmbedMarkdown(
     chatId: string,
     conversationReferenceLabel: string = DEFAULT_CHAT_REFERENCE_LABEL
 ): string {
-    console.log("Creating conversation embed markdown with chatId:", chatId, "and label:", conversationReferenceLabel); // Debug log
     const sanitizedchatId = chatId.trim();
     const sanitizedConversationReferenceLabel = conversationReferenceLabel.trim();
 
