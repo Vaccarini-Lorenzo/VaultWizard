@@ -10,8 +10,8 @@ const providerFieldDefinitions: Record<AiProvider, ProviderFieldDefinition[]> = 
     azure: [
         {
             settingKey: "endpoint",
-            label: "Endpoint",
-            placeholder: "https://your-resource.openai.azure.com"
+            label: "Endpoint (including chat/response path)",
+            placeholder: "https://your-resource.openai.azure.com/openai/responses"
         },
         {
             settingKey: "apiKey",

@@ -70,6 +70,14 @@
     align-items: center;
     gap: 8px;
     padding: 8px 6px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    transition: background 120ms ease, border-color 120ms ease;
+}
+
+.vault-wizard-settings-row:hover {
+    background: color-mix(in srgb, var(--background-secondary) 78%, transparent);
+    border-color: var(--background-modifier-border);
 }
 
 .vault-wizard-settings-provider-badge {
@@ -86,15 +94,29 @@
 .vault-wizard-settings-model-name {
     color: var(--text-normal);
     word-break: break-word;
+    flex: 1;
+    min-width: 0;
 }
 
-.vault-wizard-settings-actions {
+.vault-wizard-settings-row-actions {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
 }
 
-.vault-wizard-settings-primary-action {
-    min-width: 120px;
+.vault-wizard-settings-edit-btn:hover {
+    border-color: color-mix(in srgb, var(--interactive-accent) 45%, var(--background-modifier-border));
+    background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+}
+
+.vault-wizard-settings-delete-btn {
+    color: var(--text-error);
+}
+
+.vault-wizard-settings-delete-btn:hover {
+    border-color: color-mix(in srgb, var(--text-error) 45%, var(--background-modifier-border));
+    background: color-mix(in srgb, var(--text-error) 12%, transparent);
 }
 
 .vault-wizard-message-list {

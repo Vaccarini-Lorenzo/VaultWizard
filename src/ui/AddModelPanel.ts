@@ -16,11 +16,30 @@ function collectProviderSettings(providerFieldsContainer: HTMLElement): Record<s
     return providerSettings;
 }
 
+function applyProviderSettings(
+    providerFieldsContainer: HTMLElement,
+    providerSettings: Record<string, string>
+): void {
+    const providerInputs: any = providerFieldsContainer.querySelectorAll<HTMLInputElement>("input[data-setting-key]");
+
+    for (const providerInput of providerInputs) {
+        const settingKey = providerInput.dataset.settingKey;
+        if (!settingKey) continue;
+        providerInput.value = providerSettings[settingKey] ?? "";
+    }
+}
+
 export function renderAddModelPanel(container: HTMLElement, controller: ChatController) {
+    const editingConfiguredModel = controller.getEditingConfiguredModel();
+    const isEditingConfiguredModel = editingConfiguredModel !== null;
+
     const settingsWrapper = container.createDiv({ cls: "vault-wizard-settings-wrap" });
 
     const headerWrapper = settingsWrapper.createDiv({ cls: "vault-wizard-header" });
-    headerWrapper.createEl("h3", { text: "Add a model", cls: "vault-wizard-title" });
+    headerWrapper.createEl("h3", {
+        text: isEditingConfiguredModel ? "Edit model" : "Add a model",
+        cls: "vault-wizard-title"
+    });
 
     const backButton = headerWrapper.createEl("button", {
         cls: "vault-wizard-icon-btn vault-wizard-ghost-btn",
@@ -30,7 +49,9 @@ export function renderAddModelPanel(container: HTMLElement, controller: ChatCont
 
     settingsWrapper.createEl("p", {
         cls: "vault-wizard-add-model-description",
-        text: "Choose your AI provider to reveal the required connection fields."
+        text: isEditingConfiguredModel
+            ? "Update your model connection details."
+            : "Choose your AI provider to reveal the required connection fields."
     });
 
     const formCard = settingsWrapper.createDiv({ cls: "vault-wizard-form vault-wizard-form-card" });
@@ -47,6 +68,7 @@ export function renderAddModelPanel(container: HTMLElement, controller: ChatCont
             placeholder: "e.g. Main OpenAI Model"
         }
     });
+    modelNameInput.value = editingConfiguredModel?.modelName ?? "";
 
     const providerFieldWrapper = formCard.createDiv({ cls: "vault-wizard-form-field" });
     providerFieldWrapper.createEl("label", {
@@ -76,10 +98,16 @@ export function renderAddModelPanel(container: HTMLElement, controller: ChatCont
         renderProviderFields(providerSpecificContainer, selectedProvider);
     });
 
+    if (editingConfiguredModel) {
+        providerSelect.value = editingConfiguredModel.provider;
+        renderProviderFields(providerSpecificContainer, editingConfiguredModel.provider);
+        applyProviderSettings(providerSpecificContainer, editingConfiguredModel.settings);
+    }
+
     const actionsWrapper = formCard.createDiv({ cls: "vault-wizard-add-model-actions" });
     const saveButton = actionsWrapper.createEl("button", {
         cls: "vault-wizard-send-btn vault-wizard-add-model-save-btn",
-        text: "Save"
+        text: isEditingConfiguredModel ? "Update" : "Save"
     });
 
     saveButton.addEventListener("click", async () => {
@@ -98,13 +126,22 @@ export function renderAddModelPanel(container: HTMLElement, controller: ChatCont
 
         const providerSettings = collectProviderSettings(providerSpecificContainer);
 
-        await controller.saveConfiguredModel({
-            provider: selectedProvider,
-            modelName,
-            settings: providerSettings
-        });
+        if (editingConfiguredModel) {
+            await controller.updateConfiguredModel(editingConfiguredModel.id, {
+                provider: selectedProvider,
+                modelName,
+                settings: providerSettings
+            });
+            new Notice("Model updated.");
+        } else {
+            await controller.saveConfiguredModel({
+                provider: selectedProvider,
+                modelName,
+                settings: providerSettings
+            });
+            new Notice("Model saved.");
+        }
 
-        new Notice("Model saved.");
         controller.returnToSettingsPanel();
     });
 }

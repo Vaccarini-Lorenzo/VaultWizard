@@ -31,6 +31,7 @@ export class ChatController {
     private conversationId: string;
     private chatPersistenceSettings: ChatPersistenceSettings = createDefaultChatPersistenceSettings();
     private chatHistorySessions: ChatHistorySession[] = [];
+    private editingConfiguredModelId: string | null = null;
 
     constructor(
         private readonly noteService: NoteService,
@@ -48,6 +49,7 @@ export class ChatController {
     async initialize(): Promise<void> {
         const loadedConfiguredModels = await this.modelSettingsRepository.loadModels();
         this.configuredModels.splice(0, this.configuredModels.length, ...loadedConfiguredModels);
+        this.editingConfiguredModelId = null;
 
         if (loadedConfiguredModels.length > 0) {
             this.selectedModelState.setSelectedModel(loadedConfiguredModels[0]);
@@ -200,6 +202,16 @@ export class ChatController {
         this.notify();
     }
 
+    getEditingConfiguredModel(): ConfiguredModel | null {
+        if (!this.editingConfiguredModelId) return null;
+
+        return (
+            this.configuredModels.find(
+                (configuredModel) => configuredModel.id === this.editingConfiguredModelId
+            ) ?? null
+        );
+    }
+
     async saveConfiguredModel(newConfiguredModelInput: NewConfiguredModelInput): Promise<void> {
         const sanitizedModelName = newConfiguredModelInput.modelName.trim();
         if (!sanitizedModelName) return;
@@ -224,6 +236,61 @@ export class ChatController {
         this.notify();
     }
 
+    async updateConfiguredModel(
+        configuredModelId: string,
+        nextConfiguredModelInput: NewConfiguredModelInput
+    ): Promise<void> {
+        const sanitizedModelName = nextConfiguredModelInput.modelName.trim();
+        if (!sanitizedModelName) return;
+
+        const existingConfiguredModelIndex = this.configuredModels.findIndex(
+            (configuredModel) => configuredModel.id === configuredModelId
+        );
+        if (existingConfiguredModelIndex < 0) return;
+
+        const existingConfiguredModel = this.configuredModels[existingConfiguredModelIndex];
+        const updatedConfiguredModel: ConfiguredModel = {
+            ...existingConfiguredModel,
+            provider: nextConfiguredModelInput.provider,
+            modelName: sanitizedModelName,
+            settings: { ...nextConfiguredModelInput.settings }
+        };
+
+        const nextConfiguredModels = [...this.configuredModels];
+        nextConfiguredModels[existingConfiguredModelIndex] = updatedConfiguredModel;
+
+        await this.modelSettingsRepository.saveModels(nextConfiguredModels);
+        this.configuredModels.splice(0, this.configuredModels.length, ...nextConfiguredModels);
+
+        const selectedConfiguredModel = this.selectedModelState.getSelectedModel();
+        if (selectedConfiguredModel?.id === configuredModelId) {
+            this.selectedModelState.setSelectedModel(updatedConfiguredModel);
+        }
+
+        this.notify();
+    }
+
+    async deleteConfiguredModel(configuredModelId: string): Promise<void> {
+        const nextConfiguredModels = this.configuredModels.filter(
+            (configuredModel) => configuredModel.id !== configuredModelId
+        );
+        if (nextConfiguredModels.length === this.configuredModels.length) return;
+
+        await this.modelSettingsRepository.saveModels(nextConfiguredModels);
+        this.configuredModels.splice(0, this.configuredModels.length, ...nextConfiguredModels);
+
+        const selectedConfiguredModel = this.selectedModelState.getSelectedModel();
+        if (selectedConfiguredModel?.id === configuredModelId) {
+            this.selectedModelState.setSelectedModel(nextConfiguredModels[0] ?? null);
+        }
+
+        if (this.editingConfiguredModelId === configuredModelId) {
+            this.editingConfiguredModelId = null;
+        }
+
+        this.notify();
+    }
+
     openChatPanel(): void {
         this.setActivePanel("chat");
     }
@@ -237,10 +304,22 @@ export class ChatController {
     }
 
     openAddModelPanel(): void {
+        this.editingConfiguredModelId = null;
+        this.setActivePanel("add-model");
+    }
+
+    openEditModelPanel(configuredModelId: string): void {
+        const existingConfiguredModel = this.configuredModels.find(
+            (configuredModel) => configuredModel.id === configuredModelId
+        );
+        if (!existingConfiguredModel) return;
+
+        this.editingConfiguredModelId = configuredModelId;
         this.setActivePanel("add-model");
     }
 
     returnToSettingsPanel(): void {
+        this.editingConfiguredModelId = null;
         this.setActivePanel("settings");
     }
 

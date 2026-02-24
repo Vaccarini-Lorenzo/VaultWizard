@@ -82,7 +82,7 @@ export class AzureAIInvoker implements AIInvoker {
 
     private buildResponsesUrl(endpointBase: string, apiVersion: string): string {
         const normalizedEndpointBase = endpointBase.replace(/\/+$/, "");
-        return `${normalizedEndpointBase}/openai/responses?api-version=${encodeURIComponent(apiVersion)}`;
+        return `${normalizedEndpointBase}?api-version=${encodeURIComponent(apiVersion)}`;
     }
 
     private buildInputMessages(): Array<{ role: string; content: string }> {

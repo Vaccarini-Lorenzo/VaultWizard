@@ -1,3 +1,4 @@
+import { Notice } from "obsidian";
 import { ChatController } from "../controllers/ChatController";
 import { renderPersistenceSettingsForm } from "./components/PersistenceSettingsForm";
 
@@ -46,15 +47,40 @@ export function renderSettingsPanel(container: HTMLElement, controller: ChatCont
                 cls: "vault-wizard-settings-model-name",
                 text: configuredModel.modelName
             });
+
+            const rowActions = modelRow.createDiv({ cls: "vault-wizard-settings-row-actions" });
+
+            const editButton = rowActions.createEl("button", {
+                cls: "vault-wizard-icon-btn vault-wizard-ghost-btn vault-wizard-settings-edit-btn",
+                text: "Edit"
+            });
+            editButton.addEventListener("click", () => {
+                controller.openEditModelPanel(configuredModel.id);
+            });
+
+            const deleteButton = rowActions.createEl("button", {
+                cls: "vault-wizard-icon-btn vault-wizard-ghost-btn vault-wizard-settings-delete-btn",
+                text: "Delete"
+            });
+            deleteButton.addEventListener("click", async () => {
+                const confirmed = window.confirm(
+                    `Delete model "${configuredModel.modelName}"? This action cannot be undone.`
+                );
+                if (!confirmed) return;
+
+                await controller.deleteConfiguredModel(configuredModel.id);
+                new Notice("Model deleted.");
+            });
         }
     }
 
-    renderPersistenceSettingsForm(settingsWrapper, controller);
 
-    const actionsWrapper = settingsWrapper.createDiv({ cls: "vault-wizard-settings-actions" });
+    const actionsWrapper = modelsCard.createDiv({ cls: "vault-wizard-settings-actions" });
     const addModelButton = actionsWrapper.createEl("button", {
         cls: "vault-wizard-send-btn vault-wizard-settings-primary-action",
         text: "Add a model"
     });
     addModelButton.addEventListener("click", () => controller.openAddModelPanel());
+
+    renderPersistenceSettingsForm(settingsWrapper, controller);
 }
