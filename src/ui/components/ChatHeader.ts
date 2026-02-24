@@ -8,6 +8,7 @@ export function renderChatHeader(
     configuredModels: readonly ConfiguredModel[],
     selectedConfiguredModelId: string | null,
     onSelectConfiguredModel: (configuredModelId: string) => void,
+    onEmbedConversationInEditor: () => void,
     onNewChat: () => void,
     onToggleHistorySidebar: () => void
 ) {
@@ -54,6 +55,15 @@ export function renderChatHeader(
     setIcon(historyButton, "history");
     historyButton.appendText(" Chats");
     historyButton.addEventListener("click", onToggleHistorySidebar);
+
+    const embedConversationButton = controlsWrapper.createEl("button", {
+        cls: "vault-wizard-icon-btn",
+        text: "Embed"
+    });
+    embedConversationButton.setAttribute("aria-label", "Embed conversation reference in editor");
+    setIcon(embedConversationButton, "link");
+    embedConversationButton.appendText(" Embed");
+    embedConversationButton.addEventListener("click", onEmbedConversationInEditor);
 
     const newChatButton = controlsWrapper.createEl("button", {
         cls: "vault-wizard-icon-btn vault-wizard-new-chat-btn"

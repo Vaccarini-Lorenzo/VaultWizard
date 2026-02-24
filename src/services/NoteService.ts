@@ -107,4 +107,25 @@ export class NoteService {
 
         return activeElement.closest(".cm-editor") !== null;
     }
+
+    insertTextAtCursor(textToInsert: string): boolean {
+        const markdownView = this.resolveWritableMarkdownView();
+        if (!markdownView?.editor) return false;
+
+        markdownView.editor.replaceSelection(textToInsert);
+        return true;
+    }
+
+    private resolveWritableMarkdownView(): MarkdownView | null {
+        const activeMarkdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (activeMarkdownView?.editor) return activeMarkdownView;
+
+        const markdownLeaf = this.app.workspace
+            .getLeavesOfType("markdown")
+            .find((workspaceLeaf) => workspaceLeaf.view instanceof MarkdownView);
+
+        if (!markdownLeaf) return null;
+
+        return markdownLeaf.view instanceof MarkdownView ? markdownLeaf.view : null;
+    }
 }

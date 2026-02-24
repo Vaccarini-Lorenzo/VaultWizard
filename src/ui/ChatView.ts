@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf } from "obsidian";
+import { ItemView, Notice, WorkspaceLeaf } from "obsidian";
 import { VIEW_TYPE_AI_HELPER } from "../constants";
 import { ChatController } from "../controllers/ChatController";
 import { renderAddModelPanel } from "./AddModelPanel";
@@ -88,6 +88,16 @@ export class ChatView extends ItemView {
             this.controller.getConfiguredModels(),
             selectedConfiguredModel?.id ?? null,
             (configuredModelId) => this.controller.selectConfiguredModelById(configuredModelId),
+            () => {
+                const didInsertConversationReference = this.controller.embedCurrentConversationReferenceInActiveNote();
+
+                if (!didInsertConversationReference) {
+                    new Notice("No active editor");
+                    return;
+                }
+
+                new Notice("Conversation reference inserted");
+            },
             () => this.controller.resetChatAndStartNewConversation(),
             () => {
                 this.historySidebarOpen = !this.historySidebarOpen;

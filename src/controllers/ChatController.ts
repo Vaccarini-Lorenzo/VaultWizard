@@ -18,6 +18,8 @@ import {
 } from "../models/ChatPersistenceSettings";
 import { ChatHistorySession } from "../models/ChatHistorySession";
 import { PersistenceController } from "./PersistenceController";
+import { createConversationEmbedMarkdown } from "../services/ConversationEmbedLinkBuilder";
+
 
 type Listener = () => void;
 
@@ -181,25 +183,47 @@ export class ChatController {
         return this.chatHistorySessions;
     }
 
+    async openConversationById(conversationId: string): Promise<boolean> {
+        const sanitizedConversationId = conversationId.trim();
+        if (!sanitizedConversationId) return false;
+
+        const historySession = this.chatHistorySessions.find(
+            (chatHistorySession) => chatHistorySession.conversationId === sanitizedConversationId
+        );
+
+        if (historySession) {
+            this.applyConversationSnapshot(
+                historySession.conversationId,
+                historySession.messages,
+                historySession.debugTraces
+            );
+            return true;
+        }
+
+        const persistedConversation = await this.persistenceController.get(sanitizedConversationId);
+        if (!persistedConversation) return false;
+
+        this.applyConversationSnapshot(
+            persistedConversation.conversationId,
+            persistedConversation.messages,
+            persistedConversation.debugTraces
+        );
+
+        await this.refreshChatHistorySessions();
+        return true;
+    }
+
     openConversationFromHistory(conversationId: string): void {
         const existingSession = this.chatHistorySessions.find(
             (chatHistorySession) => chatHistorySession.conversationId === conversationId
         );
         if (!existingSession) return;
 
-        this.persistCurrentConversationIfNeeded();
-
-        this.conversationId = existingSession.conversationId;
-        currentChatStorage.replaceConversation(
+        this.applyConversationSnapshot(
             existingSession.conversationId,
-            existingSession.messages.map((chatMessage) => ({ ...chatMessage }))
+            existingSession.messages,
+            existingSession.debugTraces
         );
-        debugTraceStorage.replaceTraces(
-            existingSession.conversationId,
-            existingSession.debugTraces.map((debugTrace) => ({ ...debugTrace }))
-        );
-        this.streaming = false;
-        this.notify();
     }
 
     getEditingConfiguredModel(): ConfiguredModel | null {
@@ -412,6 +436,13 @@ export class ChatController {
         }
     }
 
+    embedCurrentConversationReferenceInActiveNote(): boolean {
+        const conversationEmbedMarkdown = createConversationEmbedMarkdown(this.conversationId);
+        if (!conversationEmbedMarkdown) return false;
+
+        return this.noteService.insertTextAtCursor(conversationEmbedMarkdown);
+    }
+
     private setActivePanel(nextPanel: UiPanel): void {
         if (this.activePanel === nextPanel) return;
         this.activePanel = nextPanel;
@@ -488,5 +519,27 @@ export class ChatController {
         });
 
         void this.refreshChatHistorySessions();
+    }
+
+    private applyConversationSnapshot(
+        conversationId: string,
+        messages: readonly ChatMessage[],
+        debugTraces: readonly DebugTurnTrace[]
+    ): void {
+        this.persistCurrentConversationIfNeeded();
+
+        this.conversationId = conversationId;
+        currentChatStorage.replaceConversation(
+            conversationId,
+            messages.map((chatMessage) => ({ ...chatMessage }))
+        );
+        debugTraceStorage.replaceTraces(
+            conversationId,
+            debugTraces.map((debugTrace) => ({ ...debugTrace }))
+        );
+
+        this.streaming = false;
+        this.activePanel = "chat";
+        this.notify();
     }
 }

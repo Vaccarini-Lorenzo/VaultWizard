@@ -23,6 +23,7 @@ export class AzureAIInvoker implements AIInvoker {
         const requestBody: Record<string, unknown> = {
             model: deploymentName,
             input: this.buildInputMessages(),
+            // tools: [{"type": "image_generation", "action": "generate"}],
             max_output_tokens: 2048,
             stream: true
         };
@@ -40,6 +41,8 @@ export class AzureAIInvoker implements AIInvoker {
 
         let finalTokenUsage: TokenUsage | undefined;
 
+        console.log(response);
+
         if (!response.body) {
             const json = await response.json();
             const completeText = this.textExtractor.extractText(json);
@@ -56,6 +59,7 @@ export class AzureAIInvoker implements AIInvoker {
         }
 
         await this.sseReader.consume(response, onChunk, (eventPayload) => {
+            console.log("Received SSE event payload:", eventPayload);
             const extractedUsage = this.usageExtractor.extract(eventPayload);
             if (extractedUsage) {
                 finalTokenUsage = extractedUsage;

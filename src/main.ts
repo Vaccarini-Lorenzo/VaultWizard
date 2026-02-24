@@ -12,6 +12,10 @@ import { ConversationIdFactory } from "./services/ConversationIdFactory";
 import { PersistenceController } from "./controllers/PersistenceController";
 import { currentChatStorage } from "./services/CurrentChatStorage";
 import { debugTraceStorage } from "./services/DebugTraceStorage";
+import {
+    resolveConversationIdFromProtocolParams,
+    VAULT_WIZARD_CHAT_PROTOCOL_ACTION
+} from "./services/ConversationProtocol";
 
 export default class ObsidianAiHelperPlugin extends Plugin {
     private controller!: ChatController;
@@ -83,6 +87,21 @@ export default class ObsidianAiHelperPlugin extends Plugin {
                 await this.newChatCommand();
             }
         });
+
+        this.registerObsidianProtocolHandler(VAULT_WIZARD_CHAT_PROTOCOL_ACTION, async (protocolParams) => {
+            const conversationId = resolveConversationIdFromProtocolParams(protocolParams);
+            if (!conversationId) {
+                new Notice("Conversation not found");
+                return;
+            }
+
+            await this.openChatView();
+
+            const didOpenConversation = await this.controller.openConversationById(conversationId);
+            if (!didOpenConversation) {
+                new Notice("Conversation not found");
+            }
+        });
     }
 
     onunload() {
@@ -94,6 +113,16 @@ export default class ObsidianAiHelperPlugin extends Plugin {
 
         if (leaves.length > 0) {
             leaves.forEach((leaf) => leaf.detach());
+            return;
+        }
+
+        await this.openChatView();
+    }
+
+    private async openChatView(): Promise<void> {
+        const existingLeaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_AI_HELPER)[0];
+        if (existingLeaf) {
+            this.app.workspace.revealLeaf(existingLeaf);
             return;
         }
 
