@@ -1,12 +1,12 @@
-import { ChatHistorySession } from "../models/ChatHistorySession";
-import { ChatMessage } from "../models/ChatMessage";
-import { DebugTurnTrace } from "../models/DebugTurnTrace";
+import { ChatHistorySession } from "../../models/chat/ChatHistorySession";
+import { ChatMessage } from "../../models/chat/ChatMessage";
+import { DebugTurnTrace } from "../../models/debug/DebugTurnTrace";
 
 class ChatHistoryStorage {
     private readonly chatHistorySessions: ChatHistorySession[] = [];
 
     archiveConversation(
-        conversationId: string,
+        chatId: string,
         messages: readonly ChatMessage[],
         debugTraces: readonly DebugTurnTrace[] = []
     ): void {
@@ -15,7 +15,7 @@ class ChatHistoryStorage {
         const sessionTitle = this.buildSessionTitle(sanitizedMessages);
 
         const nextSession: ChatHistorySession = {
-            conversationId,
+            chatId,
             title: sessionTitle,
             updatedAt: Date.now(),
             messages: sanitizedMessages,
@@ -23,7 +23,7 @@ class ChatHistoryStorage {
         };
 
         const existingSessionIndex = this.chatHistorySessions.findIndex(
-            (chatHistorySession) => chatHistorySession.conversationId === conversationId
+            (chatHistorySession) => chatHistorySession.chatId === chatId
         );
 
         if (existingSessionIndex >= 0) {
@@ -40,9 +40,9 @@ class ChatHistoryStorage {
         });
     }
 
-    getSessionByConversationId(conversationId: string): ChatHistorySession | null {
+    getSessionBychatId(chatId: string): ChatHistorySession | null {
         const foundSession = this.chatHistorySessions.find(
-            (chatHistorySession) => chatHistorySession.conversationId === conversationId
+            (chatHistorySession) => chatHistorySession.chatId === chatId
         );
 
         if (!foundSession) return null;

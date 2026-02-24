@@ -1,9 +1,9 @@
 import { AIInvoker, AIInvokerInput, AIInvokerResult } from "../AIInvoker";
-import { TokenUsage } from "../../../models/TokenUsage";
+import { TokenUsage } from "../../../models/llm/TokenUsage";
 import { AzureResponsesSseReader } from "./helpers/AzureResponsesSseReader";
 import { AzureResponsesTextExtractor } from "./helpers/AzureResponsesTextExtractor";
 import { AzureResponsesUsageExtractor } from "./helpers/AzureResponsesUsageExtractor";
-import { currentChatStorage } from "services/CurrentChatStorage";
+import { currentChatStorage } from "services/chat/CurrentChatStorage";
 
 export class AzureAIInvoker implements AIInvoker {
     private readonly textExtractor = new AzureResponsesTextExtractor();
@@ -41,8 +41,6 @@ export class AzureAIInvoker implements AIInvoker {
 
         let finalTokenUsage: TokenUsage | undefined;
 
-        console.log(response);
-
         if (!response.body) {
             const json = await response.json();
             const completeText = this.textExtractor.extractText(json);
@@ -59,7 +57,6 @@ export class AzureAIInvoker implements AIInvoker {
         }
 
         await this.sseReader.consume(response, onChunk, (eventPayload) => {
-            console.log("Received SSE event payload:", eventPayload);
             const extractedUsage = this.usageExtractor.extract(eventPayload);
             if (extractedUsage) {
                 finalTokenUsage = extractedUsage;

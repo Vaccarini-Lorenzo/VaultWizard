@@ -1,8 +1,8 @@
+import { DebugTurnTrace } from "models/debug/DebugTurnTrace";
 import { ChatMessage } from "./ChatMessage";
-import { DebugTurnTrace } from "./DebugTurnTrace";
 
 export interface ChatHistorySession {
-    conversationId: string;
+    chatId: string;
     title: string;
     updatedAt: number;
     messages: ChatMessage[];

@@ -1,4 +1,4 @@
-import { AiProvider } from "../../models/AiProvider";
+import { AiProvider } from "../../models/llm/AiProvider";
 
 interface ProviderFieldDefinition {
     settingKey: string;

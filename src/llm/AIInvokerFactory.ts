@@ -1,4 +1,4 @@
-import { AiProvider } from "../models/AiProvider";
+import { AiProvider } from "../models/llm/AiProvider";
 import { AIInvoker } from "./invokers/AIInvoker";
 
 export class AIInvokerFactory {

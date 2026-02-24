@@ -1,12 +1,12 @@
-import { ChatMessage } from "models/ChatMessage";
+import { ChatMessage } from "models/chat/ChatMessage";
 
 class CurrentChatStorage {
     public messages: ChatMessage[];
-    public conversationId: string;
+    public chatId: string;
 
     constructor() {
         this.messages = [];
-        this.conversationId = "";
+        this.chatId = "";
         this.appendSystemMessage();
     }
 
@@ -45,14 +45,14 @@ class CurrentChatStorage {
         });
     }
 
-    clear(conversationId: string) {
+    clear(chatId: string) {
         this.messages = [];
-        this.conversationId = conversationId;
+        this.chatId = chatId;
         this.appendSystemMessage();
     }
 
-    replaceConversation(conversationId: string, messages: readonly ChatMessage[]): void {
-        this.conversationId = conversationId;
+    replaceConversation(chatId: string, messages: readonly ChatMessage[]): void {
+        this.chatId = chatId;
         this.messages = messages.map((chatMessage) => ({ ...chatMessage }));
 
         const hasSystemMessage = this.messages.some((chatMessage) => chatMessage.role === "system");

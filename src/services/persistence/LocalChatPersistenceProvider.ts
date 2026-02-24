@@ -1,40 +1,16 @@
 import { App } from "obsidian";
-import { ChatMessage } from "../models/ChatMessage";
-import { DebugTurnTrace } from "../models/DebugTurnTrace";
+import { ChatMessage } from "../../models/chat/ChatMessage";
+import { DebugTurnTrace } from "../../models/debug/DebugTurnTrace";
 import { ChatPersistenceProvider, PersistedConversation } from "./ChatPersistenceProvider";
+import { LocalChatPersistenceProviderOptions } from "../../models/persistence/LocalChatPersistenceProviderOptions";
+import { VaultAdapterLike } from "../../models/persistence/VaultAdapter";
+import { PersistedConversationFilePayload } from "../../models/persistence/PersistedConversationFilePayload";
 import path from "path";
-
-interface LocalChatPersistenceProviderOptions {
-    folderPath?: string;
-    resolveConversationMessages: (conversationId: string) => readonly ChatMessage[] | null;
-    resolveConversationDebugTraces: (conversationId: string) => readonly DebugTurnTrace[] | null;
-}
-
-interface VaultAdapterListResult {
-    files: string[];
-    folders: string[];
-}
-
-interface VaultAdapterLike {
-    exists(path: string): Promise<boolean>;
-    mkdir(path: string): Promise<void>;
-    read(path: string): Promise<string>;
-    write(path: string, data: string): Promise<void>;
-    list(path: string): Promise<VaultAdapterListResult>;
-}
-
-interface PersistedConversationFilePayload {
-    conversationId: string;
-    title: string;
-    updatedAt: number;
-    messages: ChatMessage[];
-    debugTraces?: DebugTurnTrace[];
-}
 
 export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
     private readonly chatFolderPath: string;
-    private readonly resolveConversationMessages: (conversationId: string) => readonly ChatMessage[] | null;
-    private readonly resolveConversationDebugTraces: (conversationId: string) => readonly DebugTurnTrace[] | null;
+    private readonly resolveConversationMessages: (chatId: string) => readonly ChatMessage[] | null;
+    private readonly resolveConversationDebugTraces: (chatId: string) => readonly DebugTurnTrace[] | null;
 
     constructor(private readonly app: App, options: LocalChatPersistenceProviderOptions) {
         this.chatFolderPath = options.folderPath?.trim() || path.join(".obsidian", "plugins", "vault_wizard", "chats");
@@ -66,15 +42,15 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
         return sortedConversations.slice(0, Math.max(0, maxConversationCount));
     }
 
-    async update(conversationId: string): Promise<void> {
-        const messagesToPersist = this.resolveConversationMessages(conversationId);
+    async update(chatId: string): Promise<void> {
+        const messagesToPersist = this.resolveConversationMessages(chatId);
         if (!messagesToPersist) return;
 
-        const debugTracesToPersist = this.resolveConversationDebugTraces(conversationId) ?? [];
-        const existingConversation = await this.get(conversationId);
+        const debugTracesToPersist = this.resolveConversationDebugTraces(chatId) ?? [];
+        const existingConversation = await this.get(chatId);
 
         const persistedConversation: PersistedConversation = {
-            conversationId,
+            chatId,
             title: this.buildConversationTitle(messagesToPersist),
             updatedAt: this.resolveConversationUpdatedAt(messagesToPersist, existingConversation?.updatedAt),
             messages: messagesToPersist.map((chatMessage) => ({ ...chatMessage })),
@@ -84,9 +60,9 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
         const vaultAdapter = this.getVaultAdapter();
         await this.ensureBaseFolder(vaultAdapter);
 
-        const conversationFilePath = this.buildConversationFilePath(conversationId);
+        const conversationFilePath = this.buildConversationFilePath(chatId);
         const payload: PersistedConversationFilePayload = {
-            conversationId: persistedConversation.conversationId,
+            chatId: persistedConversation.chatId,
             title: persistedConversation.title,
             updatedAt: persistedConversation.updatedAt,
             messages: persistedConversation.messages,
@@ -96,9 +72,9 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
         await vaultAdapter.write(conversationFilePath, JSON.stringify(payload, null, 2));
     }
 
-    async get(conversationId: string): Promise<PersistedConversation | null> {
+    async get(chatId: string): Promise<PersistedConversation | null> {
         const vaultAdapter = this.getVaultAdapter();
-        const conversationFilePath = this.buildConversationFilePath(conversationId);
+        const conversationFilePath = this.buildConversationFilePath(chatId);
         const fileExists = await vaultAdapter.exists(conversationFilePath);
 
         if (!fileExists) return null;
@@ -121,7 +97,7 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
             const parsedPayload = JSON.parse(rawFileContent) as PersistedConversationFilePayload;
 
             if (
-                typeof parsedPayload?.conversationId !== "string" ||
+                typeof parsedPayload?.chatId !== "string" ||
                 typeof parsedPayload?.title !== "string" ||
                 typeof parsedPayload?.updatedAt !== "number" ||
                 !Array.isArray(parsedPayload?.messages)
@@ -134,7 +110,7 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
                 : [];
 
             return {
-                conversationId: parsedPayload.conversationId,
+                chatId: parsedPayload.chatId,
                 title: parsedPayload.title,
                 updatedAt: parsedPayload.updatedAt,
                 messages: parsedPayload.messages.map((chatMessage) => ({ ...chatMessage })),
@@ -145,9 +121,9 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
         }
     }
 
-    private buildConversationFilePath(conversationId: string): string {
-        const sanitizedConversationId = conversationId.replace(/[^\w\-]/g, "_");
-        return `${this.chatFolderPath}/${sanitizedConversationId}.json`;
+    private buildConversationFilePath(chatId: string): string {
+        const sanitizedchatId = chatId.replace(/[^\w\-]/g, "_");
+        return `${this.chatFolderPath}/${sanitizedchatId}.json`;
     }
 
     private buildConversationTitle(messages: readonly ChatMessage[]): string {

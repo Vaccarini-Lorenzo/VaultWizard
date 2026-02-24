@@ -1,5 +1,5 @@
-import { ConfiguredModel } from "../../models/ConfiguredModel";
-import { TokenUsage } from "../../models/TokenUsage";
+import { ConfiguredModel } from "../../models/llm/ConfiguredModel";
+import { TokenUsage } from "../../models/llm/TokenUsage";
 
 export interface AIInvokerInput {
     newUserMessage: string;

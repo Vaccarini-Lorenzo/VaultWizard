@@ -1,5 +1,5 @@
 import { setIcon } from "obsidian";
-import { ConfiguredModel } from "../../models/ConfiguredModel";
+import { ConfiguredModel } from "../../models/llm/ConfiguredModel";
 
 export function renderChatHeader(
     container: HTMLElement,

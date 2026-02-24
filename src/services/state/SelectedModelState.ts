@@ -1,4 +1,4 @@
-import { ConfiguredModel } from "../models/ConfiguredModel";
+import { ConfiguredModel } from "../../models/llm/ConfiguredModel";
 
 type SelectedModelListener = () => void;
 

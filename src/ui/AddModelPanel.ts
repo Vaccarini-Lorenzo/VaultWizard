@@ -1,6 +1,6 @@
 import { Notice } from "obsidian";
 import { ChatController } from "../controllers/ChatController";
-import { AiProvider } from "../models/AiProvider";
+import { AiProvider } from "../models/llm/AiProvider";
 import { renderProviderFields } from "./components/ProviderFields";
 
 function collectProviderSettings(providerFieldsContainer: HTMLElement): Record<string, string> {

@@ -1,11 +1,8 @@
 import { App } from "obsidian";
-import { ChatMessage } from "../models/ChatMessage";
-import { DebugTurnTrace } from "../models/DebugTurnTrace";
-import {
-    ChatPersistenceProvider as ChatPersistenceProviderContract,
-    PersistedConversation
-} from "../persistence/ChatPersistenceProvider";
-import { LocalChatPersistenceProvider } from "../persistence/LocalChatPersistenceProvider";
+import { ChatMessage } from "../models/chat/ChatMessage";
+import { DebugTurnTrace } from "../models/debug/DebugTurnTrace";
+import { ChatPersistenceProvider as ChatPersistenceProviderContract, PersistedConversation } from "../services/persistence/ChatPersistenceProvider";
+import { LocalChatPersistenceProvider } from "../services/persistence/LocalChatPersistenceProvider";
 
 export type PersistenceProviderKind = "local" | "cosmosDB";
 
@@ -24,8 +21,8 @@ export type PersistenceConfiguration =
 
 interface PersistenceControllerDependencies {
     app: App;
-    resolveConversationMessages: (conversationId: string) => readonly ChatMessage[] | null;
-    resolveConversationDebugTraces: (conversationId: string) => readonly DebugTurnTrace[] | null;
+    resolveConversationMessages: (chatId: string) => readonly ChatMessage[] | null;
+    resolveConversationDebugTraces: (chatId: string) => readonly DebugTurnTrace[] | null;
 }
 
 export class PersistenceController {
@@ -55,12 +52,12 @@ export class PersistenceController {
         return this.activeProvider.getMostRecent(maxConversationCount);
     }
 
-    update(conversationId: string): Promise<void> {
-        return this.activeProvider.update(conversationId);
+    update(chatId: string): Promise<void> {
+        return this.activeProvider.update(chatId);
     }
 
-    get(conversationId: string): Promise<PersistedConversation | null> {
-        return this.activeProvider.get(conversationId);
+    get(chatId: string): Promise<PersistedConversation | null> {
+        return this.activeProvider.get(chatId);
     }
 
     private createLocalProvider(folderPath?: string): ChatPersistenceProviderContract {

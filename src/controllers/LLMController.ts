@@ -1,4 +1,4 @@
-import { SelectedModelState } from "../state/SelectedModelState";
+import { SelectedModelState } from "../services/state/SelectedModelState";
 import { AIInvokerFactory } from "../llm/AIInvokerFactory";
 import { AIInvokerResult } from "../llm/invokers/AIInvoker";
 

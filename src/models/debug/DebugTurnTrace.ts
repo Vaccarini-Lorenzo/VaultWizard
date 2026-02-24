@@ -1,4 +1,5 @@
-import { TokenUsage } from "./TokenUsage";
+import { TokenUsage } from "models/llm/TokenUsage";
+
 
 export interface DebugRequestDetails {
     prompt: string;
@@ -7,7 +8,7 @@ export interface DebugRequestDetails {
 }
 
 export interface DebugResponseMetadata {
-    conversationId: string;
+    chatId: string;
     provider: string | null;
     modelName: string | null;
     configuredModelId: string | null;

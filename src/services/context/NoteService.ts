@@ -1,5 +1,5 @@
 import { App, MarkdownView } from "obsidian";
-import { selectedContextStorage } from "services/SelectedContextStorage";
+import { selectedContextStorage } from "services/context/SelectedContextStorage";
 
 interface EditorSelectionSnapshot {
     selectedText: string;

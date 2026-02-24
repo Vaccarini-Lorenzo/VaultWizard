@@ -1,12 +1,12 @@
 import { App } from "obsidian";
-import { ConfiguredModel } from "../models/ConfiguredModel";
+import { ConfiguredModel } from "../../models/llm/ConfiguredModel";
 import path from "path";
 
 interface ModelSettingsFileContent {
     models: ConfiguredModel[];
 }
 
-export class ModelSettingsRepository {
+export class ModelSettingsState {
 
     private readonly settingsFilePath: string;
     private readonly pluginFolderPath: string;

@@ -1,41 +1,38 @@
 import { Notice, Plugin } from "obsidian";
-import { VIEW_TYPE_AI_HELPER } from "./constants";
+import { VAULT_WIZARD_CHAT_PROTOCOL_ACTION, VIEW_TYPE_AI_HELPER } from "./constants";
 import { ChatController } from "./controllers/ChatController";
-import { ModelSettingsRepository } from "./services/ModelSettingsRepository";
-import { NoteService } from "./services/NoteService";
-import { selectedModelState } from "./state/SelectedModelState";
+import { ModelSettingsState } from "./services/state/ModelSettingsState";
+import { NoteService } from "./services/context/NoteService";
+import { selectedModelState } from "./services/state/SelectedModelState";
 import { ChatView } from "./ui/ChatView";
 import { LLMController } from "./controllers/LLMController";
 import { AIInvokerFactory } from "./llm/AIInvokerFactory";
 import { AzureAIInvoker } from "./llm/invokers/azure/AzureAIInvoker";
-import { ConversationIdFactory } from "./services/ConversationIdFactory";
+import { ChatIdFactory } from "./services/chat/ChatIdFactory";
 import { PersistenceController } from "./controllers/PersistenceController";
-import { currentChatStorage } from "./services/CurrentChatStorage";
-import { debugTraceStorage } from "./services/DebugTraceStorage";
-import {
-    resolveConversationIdFromProtocolParams,
-    VAULT_WIZARD_CHAT_PROTOCOL_ACTION
-} from "./services/ConversationProtocol";
+import { currentChatStorage } from "./services/chat/CurrentChatStorage";
+import { debugTraceStorage } from "./services/debug/DebugTraceStorage";
+import {resolvechatIdFromProtocolParams,} from "./services/chat/ConversationProtocol";
 
 export default class ObsidianAiHelperPlugin extends Plugin {
     private controller!: ChatController;
 
     async onload() {
         const noteService = new NoteService(this.app);
-        const modelSettingsRepository = new ModelSettingsRepository(this.app);
+        const modelSettingsState = new ModelSettingsState(this.app);
         const azureAIInvoker = new AzureAIInvoker();
         const aiInvokerFactory = new AIInvokerFactory(azureAIInvoker);
         const llmController = new LLMController(selectedModelState, aiInvokerFactory);
-        const conversationIdFactory = new ConversationIdFactory();
+        const chatIdFactory = new ChatIdFactory();
 
         const persistenceController = new PersistenceController({
             app: this.app,
-            resolveConversationMessages: (conversationId: string) => {
-                if (currentChatStorage.conversationId !== conversationId) return null;
+            resolveConversationMessages: (chatId: string) => {
+                if (currentChatStorage.chatId !== chatId) return null;
                 return currentChatStorage.getMessages();
             },
-            resolveConversationDebugTraces: (conversationId: string) => {
-                if (debugTraceStorage.getConversationId() !== conversationId) return null;
+            resolveConversationDebugTraces: (chatId: string) => {
+                if (debugTraceStorage.getchatId() !== chatId) return null;
                 return debugTraceStorage.getTraces();
             }
         });
@@ -43,9 +40,9 @@ export default class ObsidianAiHelperPlugin extends Plugin {
         this.controller = new ChatController(
             noteService,
             llmController,
-            modelSettingsRepository,
+            modelSettingsState,
             selectedModelState,
-            conversationIdFactory,
+            chatIdFactory,
             persistenceController
         );
         await this.controller.initialize();
@@ -88,16 +85,17 @@ export default class ObsidianAiHelperPlugin extends Plugin {
             }
         });
 
+        
         this.registerObsidianProtocolHandler(VAULT_WIZARD_CHAT_PROTOCOL_ACTION, async (protocolParams) => {
-            const conversationId = resolveConversationIdFromProtocolParams(protocolParams);
-            if (!conversationId) {
+            const chatId = resolvechatIdFromProtocolParams(protocolParams);
+            if (!chatId) {
                 new Notice("Conversation not found");
                 return;
             }
 
             await this.openChatView();
 
-            const didOpenConversation = await this.controller.openConversationById(conversationId);
+            const didOpenConversation = await this.controller.openConversationById(chatId);
             if (!didOpenConversation) {
                 new Notice("Conversation not found");
             }

@@ -1,24 +1,20 @@
-import { selectedContextStorage } from "services/SelectedContextStorage";
-import { ChatMessage } from "../models/ChatMessage";
-import { ConfiguredModel, NewConfiguredModelInput } from "../models/ConfiguredModel";
-import { DebugTurnTrace } from "../models/DebugTurnTrace";
-import { TokenUsage } from "../models/TokenUsage";
-import { UiPanel } from "../models/UiPanel";
-import { ConversationIdFactory } from "../services/ConversationIdFactory";
-import { currentChatStorage } from "../services/CurrentChatStorage";
-import { debugTraceStorage } from "../services/DebugTraceStorage";
-import { ModelSettingsRepository } from "../services/ModelSettingsRepository";
-import { NoteService } from "../services/NoteService";
-import { SelectedModelState } from "../state/SelectedModelState";
+import { ChatMessage } from "../models/chat/ChatMessage";
+import { ConfiguredModel, NewConfiguredModelInput } from "../models/llm/ConfiguredModel";
+import { DebugTurnTrace } from "../models/debug/DebugTurnTrace";
+import { TokenUsage } from "../models/llm/TokenUsage";
+import { UiPanel } from "../models/misc/UiPanel";
+import { ChatIdFactory } from "../services/chat/ChatIdFactory";
+import { currentChatStorage } from "../services/chat/CurrentChatStorage";
+import { debugTraceStorage } from "../services/debug/DebugTraceStorage";
+import { ModelSettingsState } from "../services/state/ModelSettingsState";
+import { NoteService } from "../services/context/NoteService";
+import { SelectedModelState } from "../services/state/SelectedModelState";
 import { LLMController } from "./LLMController";
-import {
-    ChatPersistenceProvider,
-    ChatPersistenceSettings,
-    createDefaultChatPersistenceSettings
-} from "../models/ChatPersistenceSettings";
-import { ChatHistorySession } from "../models/ChatHistorySession";
+import { ChatPersistenceProvider, ChatPersistenceSettings, createDefaultChatPersistenceSettings } from "../models/chat/ChatPersistenceSettings";
+import { ChatHistorySession } from "../models/chat/ChatHistorySession";
 import { PersistenceController } from "./PersistenceController";
-import { createConversationEmbedMarkdown } from "../services/ConversationEmbedLinkBuilder";
+import { createConversationEmbedMarkdown } from "../services/chat/ChatEmbedLinkBuilder";
+import { selectedContextStorage } from "services/context/SelectedContextStorage";
 
 
 type Listener = () => void;
@@ -30,7 +26,7 @@ export class ChatController {
 
     private activePanel: UiPanel = "chat";
     private streaming = false;
-    private conversationId: string;
+    private chatId: string;
     private chatPersistenceSettings: ChatPersistenceSettings = createDefaultChatPersistenceSettings();
     private chatHistorySessions: ChatHistorySession[] = [];
     private editingConfiguredModelId: string | null = null;
@@ -38,18 +34,16 @@ export class ChatController {
     constructor(
         private readonly noteService: NoteService,
         private readonly llmController: LLMController,
-        private readonly modelSettingsRepository: ModelSettingsRepository,
+        private readonly modelSettingsState: ModelSettingsState,
         private readonly selectedModelState: SelectedModelState,
-        private readonly conversationIdFactory: ConversationIdFactory,
-        private readonly persistenceController: PersistenceController
-    ) {
-        this.conversationId = this.conversationIdFactory.createConversationId();
-        currentChatStorage.clear(this.conversationId);
-        debugTraceStorage.clear(this.conversationId);
+        private readonly chatIdFactory: ChatIdFactory , private readonly persistenceController: PersistenceController) {
+        this.chatId = this.chatIdFactory.createchatId();
+        currentChatStorage.clear(this.chatId);
+        debugTraceStorage.clear(this.chatId);
     }
 
     async initialize(): Promise<void> {
-        const loadedConfiguredModels = await this.modelSettingsRepository.loadModels();
+        const loadedConfiguredModels = await this.modelSettingsState.loadModels();
         this.configuredModels.splice(0, this.configuredModels.length, ...loadedConfiguredModels);
         this.editingConfiguredModelId = null;
 
@@ -69,16 +63,17 @@ export class ChatController {
         return () => this.listeners.delete(listener);
     }
 
-    getConversationId(): string {
-        return this.conversationId;
+    getchatId(): string {
+        return this.chatId;
     }
 
     resetChatAndStartNewConversation(): void {
         this.persistCurrentConversationIfNeeded();
 
-        this.conversationId = this.conversationIdFactory.createConversationId();
-        currentChatStorage.clear(this.conversationId);
-        debugTraceStorage.clear(this.conversationId);
+        this.chatId = this.chatIdFactory
+.createchatId();
+ currentChatStorage.clear(this.chatId);
+        debugTraceStorage.clear(this.chatId);
         this.streaming = false;
         this.notify();
     }
@@ -183,28 +178,28 @@ export class ChatController {
         return this.chatHistorySessions;
     }
 
-    async openConversationById(conversationId: string): Promise<boolean> {
-        const sanitizedConversationId = conversationId.trim();
-        if (!sanitizedConversationId) return false;
+    async openConversationById(chatId: string): Promise<boolean> {
+        const sanitizedchatId = chatId.trim();
+        if (!sanitizedchatId) return false;
 
         const historySession = this.chatHistorySessions.find(
-            (chatHistorySession) => chatHistorySession.conversationId === sanitizedConversationId
+            (chatHistorySession) => chatHistorySession.chatId === sanitizedchatId
         );
 
         if (historySession) {
             this.applyConversationSnapshot(
-                historySession.conversationId,
+                historySession.chatId,
                 historySession.messages,
                 historySession.debugTraces
             );
             return true;
         }
 
-        const persistedConversation = await this.persistenceController.get(sanitizedConversationId);
+        const persistedConversation = await this.persistenceController.get(sanitizedchatId);
         if (!persistedConversation) return false;
 
         this.applyConversationSnapshot(
-            persistedConversation.conversationId,
+            persistedConversation.chatId,
             persistedConversation.messages,
             persistedConversation.debugTraces
         );
@@ -213,14 +208,14 @@ export class ChatController {
         return true;
     }
 
-    openConversationFromHistory(conversationId: string): void {
+    openConversationFromHistory(chatId: string): void {
         const existingSession = this.chatHistorySessions.find(
-            (chatHistorySession) => chatHistorySession.conversationId === conversationId
+            (chatHistorySession) => chatHistorySession.chatId === chatId
         );
         if (!existingSession) return;
 
         this.applyConversationSnapshot(
-            existingSession.conversationId,
+            existingSession.chatId,
             existingSession.messages,
             existingSession.debugTraces
         );
@@ -249,7 +244,7 @@ export class ChatController {
         };
 
         const nextConfiguredModels = [...this.configuredModels, configuredModelToPersist];
-        await this.modelSettingsRepository.saveModels(nextConfiguredModels);
+        await this.modelSettingsState.saveModels(nextConfiguredModels);
 
         this.configuredModels.splice(0, this.configuredModels.length, ...nextConfiguredModels);
 
@@ -283,7 +278,7 @@ export class ChatController {
         const nextConfiguredModels = [...this.configuredModels];
         nextConfiguredModels[existingConfiguredModelIndex] = updatedConfiguredModel;
 
-        await this.modelSettingsRepository.saveModels(nextConfiguredModels);
+        await this.modelSettingsState.saveModels(nextConfiguredModels);
         this.configuredModels.splice(0, this.configuredModels.length, ...nextConfiguredModels);
 
         const selectedConfiguredModel = this.selectedModelState.getSelectedModel();
@@ -300,7 +295,7 @@ export class ChatController {
         );
         if (nextConfiguredModels.length === this.configuredModels.length) return;
 
-        await this.modelSettingsRepository.saveModels(nextConfiguredModels);
+        await this.modelSettingsState.saveModels(nextConfiguredModels);
         this.configuredModels.splice(0, this.configuredModels.length, ...nextConfiguredModels);
 
         const selectedConfiguredModel = this.selectedModelState.getSelectedModel();
@@ -420,7 +415,7 @@ export class ChatController {
                     selectedContext: selectedContextSnapshot
                 },
                 responseMetadata: {
-                    conversationId: this.conversationId,
+                    chatId: this.chatId,
                     provider: selectedConfiguredModel?.provider ?? null,
                     modelName: selectedConfiguredModel?.modelName ?? null,
                     configuredModelId: selectedConfiguredModel?.id ?? null,
@@ -437,7 +432,7 @@ export class ChatController {
     }
 
     embedCurrentConversationReferenceInActiveNote(): boolean {
-        const conversationEmbedMarkdown = createConversationEmbedMarkdown(this.conversationId);
+        const conversationEmbedMarkdown = createConversationEmbedMarkdown(this.chatId);
         if (!conversationEmbedMarkdown) return false;
 
         return this.noteService.insertTextAtCursor(conversationEmbedMarkdown);
@@ -484,10 +479,10 @@ export class ChatController {
 
         if (!hasUserOrAssistantMessage) return;
 
-        const conversationIdToPersist = this.conversationId;
+        const chatIdToPersist = this.chatId;
 
         void this.persistenceController
-            .update(conversationIdToPersist)
+            .update(chatIdToPersist)
             .then(async () => {
                 await this.refreshChatHistorySessions();
             })
@@ -498,11 +493,11 @@ export class ChatController {
         const persistedConversations = await this.persistenceController.getMostRecent(this.maxChatHistorySessions);
 
         this.chatHistorySessions = persistedConversations.map((persistedConversation) => ({
-            conversationId: persistedConversation.conversationId,
+            chatId: persistedConversation.chatId,
             title: persistedConversation.title,
             updatedAt: persistedConversation.updatedAt,
-            messages: persistedConversation.messages.map((chatMessage) => ({ ...chatMessage })),
-            debugTraces: persistedConversation.debugTraces.map((debugTrace) => ({ ...debugTrace }))
+            messages: persistedConversation.messages.map((chatMessage: ChatMessage) => ({ ...chatMessage })),
+            debugTraces: persistedConversation.debugTraces.map((debugTrace: DebugTurnTrace) => ({ ...debugTrace }))
         }));
     }
 
@@ -522,19 +517,19 @@ export class ChatController {
     }
 
     private applyConversationSnapshot(
-        conversationId: string,
+        chatId: string,
         messages: readonly ChatMessage[],
         debugTraces: readonly DebugTurnTrace[]
     ): void {
         this.persistCurrentConversationIfNeeded();
 
-        this.conversationId = conversationId;
+        this.chatId = chatId;
         currentChatStorage.replaceConversation(
-            conversationId,
+            chatId,
             messages.map((chatMessage) => ({ ...chatMessage }))
         );
         debugTraceStorage.replaceTraces(
-            conversationId,
+            chatId,
             debugTraces.map((debugTrace) => ({ ...debugTrace }))
         );
 

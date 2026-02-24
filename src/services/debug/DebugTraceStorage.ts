@@ -1,21 +1,21 @@
-import { DebugTurnTrace } from "../models/DebugTurnTrace";
-import { TokenUsage } from "../models/TokenUsage";
+import { DebugTurnTrace } from "../../models/debug/DebugTurnTrace";
+import { TokenUsage } from "../../models/llm/TokenUsage";
 
 class DebugTraceStorage {
     private traces: DebugTurnTrace[] = [];
-    private conversationId = "";
+    private chatId = "";
 
-    clear(conversationId: string): void {
+    clear(chatId: string): void {
         this.traces = [];
-        this.conversationId = conversationId;
+        this.chatId = chatId;
     }
 
-    getConversationId(): string {
-        return this.conversationId;
+    getchatId(): string {
+        return this.chatId;
     }
 
-    replaceTraces(conversationId: string, debugTraces: readonly DebugTurnTrace[]): void {
-        this.conversationId = conversationId;
+    replaceTraces(chatId: string, debugTraces: readonly DebugTurnTrace[]): void {
+        this.chatId = chatId;
         this.traces = debugTraces.map((debugTrace) => ({ ...debugTrace }));
     }
 

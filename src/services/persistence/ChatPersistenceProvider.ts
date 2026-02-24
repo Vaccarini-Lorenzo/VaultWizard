@@ -1,8 +1,8 @@
-import { ChatMessage } from "../models/ChatMessage";
-import { DebugTurnTrace } from "../models/DebugTurnTrace";
+import { ChatMessage } from "../../models/chat/ChatMessage";
+import { DebugTurnTrace } from "../../models/debug/DebugTurnTrace";
 
 export interface PersistedConversation {
-    conversationId: string;
+    chatId: string;
     title: string;
     updatedAt: number;
     messages: ChatMessage[];
@@ -11,6 +11,6 @@ export interface PersistedConversation {
 
 export interface ChatPersistenceProvider {
     getMostRecent(maxConversationCount: number): Promise<readonly PersistedConversation[]>;
-    update(conversationId: string): Promise<void>;
-    get(conversationId: string): Promise<PersistedConversation | null>;
+    update(chatId: string): Promise<void>;
+    get(chatId: string): Promise<PersistedConversation | null>;
 }

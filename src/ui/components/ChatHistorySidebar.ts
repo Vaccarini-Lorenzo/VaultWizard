@@ -1,10 +1,10 @@
 import { setIcon } from "obsidian";
-import { ChatHistorySession } from "../../models/ChatHistorySession";
+import { ChatHistorySession } from "../../models/chat/ChatHistorySession";
 
 interface ChatHistorySidebarRenderOptions {
     sessions: readonly ChatHistorySession[];
-    activeConversationId: string;
-    onSelectConversation: (conversationId: string) => void;
+    activechatId: string;
+    onSelectConversation: (chatId: string) => void;
 }
 
 function formatHistoryTimestamp(updatedAt: number): string {
@@ -47,7 +47,7 @@ export function renderChatHistorySidebar(
 
     for (const chatHistorySession of sortedChatHistorySessions) {
         const isActiveSession =
-            chatHistorySession.conversationId === chatHistorySidebarRenderOptions.activeConversationId;
+            chatHistorySession.chatId === chatHistorySidebarRenderOptions.activechatId;
 
         const rowElement = listElement.createEl("button", {
             cls: `vault-wizard-history-item ${isActiveSession ? "is-active" : ""}`
@@ -64,7 +64,7 @@ export function renderChatHistorySidebar(
         });
 
         rowElement.addEventListener("click", () => {
-            chatHistorySidebarRenderOptions.onSelectConversation(chatHistorySession.conversationId);
+            chatHistorySidebarRenderOptions.onSelectConversation(chatHistorySession.chatId);
         });
     }
 }

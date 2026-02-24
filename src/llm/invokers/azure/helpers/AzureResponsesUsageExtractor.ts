@@ -1,4 +1,4 @@
-import { TokenUsage } from "../../../../models/TokenUsage";
+import { TokenUsage } from "../../../../models/llm/TokenUsage";
 
 export class AzureResponsesUsageExtractor {
     extract(payload: unknown): TokenUsage | null {

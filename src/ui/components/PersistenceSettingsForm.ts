@@ -1,5 +1,5 @@
 import { ChatController } from "../../controllers/ChatController";
-import { ChatPersistenceProvider, ChatPersistenceSettings } from "../../models/ChatPersistenceSettings";
+import { ChatPersistenceProvider, ChatPersistenceSettings } from "../../models/chat/ChatPersistenceSettings";
 
 function createFormField(
     container: HTMLElement,

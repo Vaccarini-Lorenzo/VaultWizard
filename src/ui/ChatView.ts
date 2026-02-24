@@ -9,8 +9,9 @@ import { renderChatHeader } from "./components/ChatHeader";
 import { renderMessageList } from "./components/MessageList";
 import { renderSelectedContextBadge } from "./components/SelectedContextBadge";
 import { renderChatHistorySidebar } from "./components/ChatHistorySidebar";
-import { currentChatStorage } from "services/CurrentChatStorage";
-import { selectedContextStorage } from "services/SelectedContextStorage";
+import { currentChatStorage } from "services/chat/CurrentChatStorage";
+import { selectedContextStorage } from "services/context/SelectedContextStorage";
+
 
 export class ChatView extends ItemView {
     private unsubscribe?: () => void;
@@ -134,9 +135,9 @@ export class ChatView extends ItemView {
 
             renderChatHistorySidebar(historyOverlayElement, {
                 sessions: this.controller.getChatHistorySessions(),
-                activeConversationId: this.controller.getConversationId(),
-                onSelectConversation: (conversationId) => {
-                    this.controller.openConversationFromHistory(conversationId);
+                activechatId: this.controller.getchatId(),
+                onSelectConversation: (chatId) => {
+                    this.controller.openConversationFromHistory(chatId);
                     this.historySidebarOpen = false;
                     this.render();
                 }
