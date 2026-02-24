@@ -4,7 +4,7 @@ import { ChatController } from "./controllers/ChatController";
 import { ModelSettingsState } from "./services/state/ModelSettingsState";
 import { NoteService } from "./services/context/NoteService";
 import { selectedModelState } from "./services/state/SelectedModelState";
-import { ChatView } from "./ui/ChatView";
+import { ChatView } from "./ui/chat/ChatView";
 import { LLMController } from "./controllers/LLMController";
 import { AIInvokerFactory } from "./llm/AIInvokerFactory";
 import { AzureAIInvoker } from "./llm/invokers/azure/AzureAIInvoker";

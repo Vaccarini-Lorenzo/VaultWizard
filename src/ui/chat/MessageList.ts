@@ -1,6 +1,6 @@
 import { App, Component } from "obsidian";
 import { ChatMessage } from "../../models/chat/ChatMessage";
-import { ChatMessageRenderer } from "./ChatMessageRenderer";
+import { ChatMessageRenderer } from "../chat/ChatMessageRenderer";
 
 interface MessageListRenderOptions {
     app: App;

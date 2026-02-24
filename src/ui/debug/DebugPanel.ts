@@ -1,5 +1,6 @@
-import { DebugTurnTrace } from "../models/DebugTurnTrace";
-import { ChatController } from "../controllers/ChatController";
+
+import { DebugTurnTrace } from "models/debug/DebugTurnTrace";
+import { ChatController } from "../../controllers/ChatController";
 
 const REQUEST_PREVIEW_MAX_LENGTH = 180;
 const RESPONSE_PREVIEW_MAX_LENGTH = 280;

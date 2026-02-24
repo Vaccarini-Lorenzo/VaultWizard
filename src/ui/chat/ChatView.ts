@@ -1,16 +1,16 @@
 import { ItemView, Notice, WorkspaceLeaf } from "obsidian";
-import { VIEW_TYPE_AI_HELPER } from "../constants";
-import { ChatController } from "../controllers/ChatController";
-import { renderAddModelPanel } from "./AddModelPanel";
-import { renderDebugPanel } from "./DebugPanel";
-import { renderSettingsPanel } from "./SettingsPanel";
-import { renderChatComposer } from "./components/ChatComposer";
-import { renderChatHeader } from "./components/ChatHeader";
-import { renderMessageList } from "./components/MessageList";
-import { renderSelectedContextBadge } from "./components/SelectedContextBadge";
-import { renderChatHistorySidebar } from "./components/ChatHistorySidebar";
+import { VIEW_TYPE_AI_HELPER } from "../../constants";
+import { ChatController } from "../../controllers/ChatController";
+import { renderDebugPanel } from "../debug/DebugPanel";
+import { renderChatComposer } from "./ChatComposer";
+import { renderChatHeader } from "./ChatHeader";
+import { renderSelectedContextBadge } from "./SelectedContextBadge";
+import { renderChatHistorySidebar } from "../chat_history/ChatHistorySidebar";
 import { currentChatStorage } from "services/chat/CurrentChatStorage";
 import { selectedContextStorage } from "services/context/SelectedContextStorage";
+import { renderSettingsPanel } from "ui/settings/SettingsPanel";
+import { renderAddModelPanel } from "ui/settings/AddModelPanel";
+import { renderMessageList } from "./MessageList";
 
 
 export class ChatView extends ItemView {

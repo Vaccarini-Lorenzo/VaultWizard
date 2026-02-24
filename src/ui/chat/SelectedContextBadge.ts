@@ -1,4 +1,5 @@
-import { SelectedContextSnapshot } from "services/SelectedContextStorage";
+import { SelectedContextSnapshot } from "services/context/SelectedContextStorage";
+
 
 export function renderSelectedContextBadge(
     container: HTMLElement,

@@ -1,6 +1,6 @@
 import { Notice } from "obsidian";
-import { ChatController } from "../controllers/ChatController";
-import { renderPersistenceSettingsForm } from "./components/PersistenceSettingsForm";
+import { renderPersistenceSettingsForm } from "./PersistenceSettingsForm";
+import { ChatController } from "controllers/ChatController";
 
 export function renderSettingsPanel(container: HTMLElement, controller: ChatController) {
     const settingsWrapper = container.createDiv({ cls: "vault-wizard-settings-wrap" });

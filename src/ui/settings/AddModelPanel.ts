@@ -1,7 +1,8 @@
+import { ChatController } from "controllers/ChatController";
+import { AiProvider } from "models/llm/AiProvider";
 import { Notice } from "obsidian";
-import { ChatController } from "../controllers/ChatController";
-import { AiProvider } from "../models/llm/AiProvider";
-import { renderProviderFields } from "./components/ProviderFields";
+import { renderProviderFields } from "./ProviderFields";
+
 
 function collectProviderSettings(providerFieldsContainer: HTMLElement): Record<string, string> {
     const providerSettings: Record<string, string> = {};
