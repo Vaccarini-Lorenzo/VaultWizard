@@ -10,14 +10,24 @@ import { currentChatStorage } from "services/chat/CurrentChatStorage";
 import { selectedContextStorage } from "services/context/SelectedContextStorage";
 import { renderSettingsPanel } from "ui/settings/SettingsPanel";
 import { renderAddModelPanel } from "ui/settings/AddModelPanel";
-import { renderMessageList } from "./MessageList";
-
+import { MessageListViewUpdater } from "./MessageList";
+import { UiPanel } from "../../models/misc/UiPanel";
 
 export class ChatView extends ItemView {
     private unsubscribe?: () => void;
     private unsubscribeSelection?: () => void;
     private historySidebarOpen = false;
     private isOpen = false;
+    private renderFrameHandle: number | null = null;
+
+    private renderedPanel: UiPanel | null = null;
+    private chatHeaderShellElement: HTMLElement | null = null;
+    private chatBodyShellElement: HTMLElement | null = null;
+    private chatMainElement: HTMLElement | null = null;
+    private selectedContextBadgeShellElement: HTMLElement | null = null;
+    private composerShellElement: HTMLElement | null = null;
+    private historyOverlayElement: HTMLElement | null = null;
+    private messageListViewUpdater: MessageListViewUpdater | null = null;
 
     constructor(
         leaf: WorkspaceLeaf,
@@ -47,43 +57,100 @@ export class ChatView extends ItemView {
     }
 
     async onOpen() {
-        this.unsubscribe = this.controller.subscribe(() => this.render());
-        this.unsubscribeSelection = selectedContextStorage.subscribe(() => this.render());
-        this.render();
+        this.unsubscribe = this.controller.subscribe(() => this.scheduleRender());
+        this.unsubscribeSelection = selectedContextStorage.subscribe(() => this.scheduleRender());
+        this.scheduleRender();
     }
 
     async onClose() {
         this.unsubscribe?.();
         this.unsubscribeSelection?.();
+
+        if (this.renderFrameHandle !== null) {
+            cancelAnimationFrame(this.renderFrameHandle);
+            this.renderFrameHandle = null;
+        }
     }
 
-    private render() {
-        const { contentEl } = this;
-        contentEl.empty();
-        contentEl.addClass("vault-wizard-root");
+    private scheduleRender(): void {
+        if (this.renderFrameHandle !== null) return;
 
+        this.renderFrameHandle = requestAnimationFrame(() => {
+            this.renderFrameHandle = null;
+            this.render();
+        });
+    }
+
+    private render(): void {
         const activePanel = this.controller.getActivePanel();
 
+        if (activePanel !== "chat") {
+            this.renderNonChatPanel(activePanel);
+            return;
+        }
+
+        this.ensureChatLayout();
+        this.renderChatHeader();
+        this.renderChatMain();
+    }
+
+    private renderNonChatPanel(activePanel: UiPanel): void {
+        if (this.renderedPanel !== activePanel) {
+            this.resetViewRoot();
+            this.renderedPanel = activePanel;
+        }
+
         if (activePanel === "debug") {
-            renderDebugPanel(contentEl, this.controller);
+            renderDebugPanel(this.contentEl, this.controller);
             return;
         }
 
         if (activePanel === "settings") {
-            renderSettingsPanel(contentEl, this.controller);
+            renderSettingsPanel(this.contentEl, this.controller);
             return;
         }
 
         if (activePanel === "add-model") {
-            renderAddModelPanel(contentEl, this.controller);
+            renderAddModelPanel(this.contentEl, this.controller);
+        }
+    }
+
+    private ensureChatLayout(): void {
+        if (this.renderedPanel !== "chat") {
+            this.resetViewRoot();
+            this.contentEl.addClass("vault-wizard-root");
+
+            this.chatHeaderShellElement = this.contentEl.createDiv({ cls: "vault-wizard-chat-header-shell" });
+
+            this.chatBodyShellElement = this.contentEl.createDiv({
+                cls: `vault-wizard-chat-body-shell ${this.historySidebarOpen ? "is-history-open" : ""}`
+            });
+
+            this.chatMainElement = this.chatBodyShellElement.createDiv({ cls: "vault-wizard-chat-main" });
+
+            const messageListShellElement = this.chatMainElement.createDiv();
+            this.messageListViewUpdater = new MessageListViewUpdater(messageListShellElement);
+
+            this.selectedContextBadgeShellElement = this.chatMainElement.createDiv();
+            this.composerShellElement = this.chatMainElement.createDiv();
+
+            this.renderedPanel = "chat";
             return;
         }
 
+        if (this.chatBodyShellElement) {
+            this.chatBodyShellElement.classList.toggle("is-history-open", this.historySidebarOpen);
+        }
+    }
+
+    private renderChatHeader(): void {
+        if (!this.chatHeaderShellElement) return;
+
+        this.chatHeaderShellElement.empty();
         const selectedConfiguredModel = this.controller.getSelectedConfiguredModel();
 
-        const chatHeaderShellElement = contentEl.createDiv({ cls: "vault-wizard-chat-header-shell" });
         renderChatHeader(
-            chatHeaderShellElement,
+            this.chatHeaderShellElement,
             () => this.controller.openDebugPanel(),
             () => this.controller.openSettingsPanel(),
             this.controller.getConfiguredModels(),
@@ -102,46 +169,80 @@ export class ChatView extends ItemView {
             () => this.controller.resetChatAndStartNewConversation(),
             () => {
                 this.historySidebarOpen = !this.historySidebarOpen;
-                this.render();
+                this.scheduleRender();
             }
         );
+    }
 
-        const chatBodyShellElement = contentEl.createDiv({
-            cls: `vault-wizard-chat-body-shell ${this.historySidebarOpen ? "is-history-open" : ""}`
-        });
+    private renderChatMain(): void {
+        if (!this.chatMainElement || !this.messageListViewUpdater) return;
 
-        const chatMainElement = chatBodyShellElement.createDiv({ cls: "vault-wizard-chat-main" });
-
-        renderMessageList(chatMainElement, currentChatStorage.getMessages(), {
+        this.messageListViewUpdater.sync(currentChatStorage.getMessages(), {
             app: this.app,
             component: this,
-            sourcePath: this.controller.getActiveNotePath()
+            sourcePath: this.controller.getActiveNotePath(),
+            isStreaming: this.controller.isStreaming()
         });
 
-        renderSelectedContextBadge(chatMainElement, selectedContextStorage.getSelection());
+        if (this.selectedContextBadgeShellElement) {
+            this.selectedContextBadgeShellElement.empty();
+            renderSelectedContextBadge(
+                this.selectedContextBadgeShellElement,
+                selectedContextStorage.getSelection()
+            );
+        }
 
-        renderChatComposer(
-            chatMainElement,
-            async (value) => {
-                await this.controller.onUserMessage(value);
-            },
-            this.controller.isStreaming()
-        );
+        if (this.composerShellElement) {
+            this.composerShellElement.empty();
+            renderChatComposer(
+                this.composerShellElement,
+                async (value) => {
+                    await this.controller.onUserMessage(value);
+                },
+                this.controller.isStreaming()
+            );
+        }
 
-        if (this.historySidebarOpen) {
-            const historyOverlayElement = chatBodyShellElement.createDiv({
+        this.renderHistorySidebar();
+    }
+
+    private renderHistorySidebar(): void {
+        if (!this.chatBodyShellElement) return;
+
+        if (!this.historySidebarOpen) {
+            this.historyOverlayElement?.remove();
+            this.historyOverlayElement = null;
+            return;
+        }
+
+        if (!this.historyOverlayElement) {
+            this.historyOverlayElement = this.chatBodyShellElement.createDiv({
                 cls: "vault-wizard-history-overlay"
             });
-
-            renderChatHistorySidebar(historyOverlayElement, {
-                sessions: this.controller.getChatHistorySessions(),
-                activechatId: this.controller.getchatId(),
-                onSelectConversation: (chatId) => {
-                    this.controller.openConversationFromHistory(chatId);
-                    this.historySidebarOpen = false;
-                    this.render();
-                }
-            });
         }
+
+        this.historyOverlayElement.empty();
+        renderChatHistorySidebar(this.historyOverlayElement, {
+            sessions: this.controller.getChatHistorySessions(),
+            activechatId: this.controller.getchatId(),
+            onSelectConversation: (chatId) => {
+                this.controller.openConversationFromHistory(chatId);
+                this.historySidebarOpen = false;
+                this.scheduleRender();
+            }
+        });
+    }
+
+    private resetViewRoot(): void {
+        this.contentEl.empty();
+        this.contentEl.addClass("vault-wizard-root");
+
+        this.chatHeaderShellElement = null;
+        this.chatBodyShellElement = null;
+        this.chatMainElement = null;
+        this.selectedContextBadgeShellElement = null;
+        this.composerShellElement = null;
+        this.historyOverlayElement = null;
+        this.messageListViewUpdater = null;
     }
 }

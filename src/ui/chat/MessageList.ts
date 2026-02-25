@@ -2,10 +2,19 @@ import { App, Component } from "obsidian";
 import { ChatMessage } from "../../models/chat/ChatMessage";
 import { ChatMessageRenderer } from "../chat/ChatMessageRenderer";
 
-interface MessageListRenderOptions {
+export interface MessageListRenderOptions {
     app: App;
     component: Component;
     sourcePath: string;
+    isStreaming: boolean;
+}
+
+interface RenderedMessageEntry {
+    role: ChatMessage["role"];
+    timestamp?: number;
+    content: string;
+    contentElement: HTMLElement;
+    renderedAsPlainText: boolean;
 }
 
 function formatMessageRole(chatMessage: ChatMessage): string {
@@ -17,26 +26,134 @@ function formatMessageTimestamp(chatMessage: ChatMessage): string {
     return new Date(chatMessage.timestamp).toLocaleTimeString();
 }
 
-export function renderMessageList(
-    container: HTMLElement,
-    messages: ChatMessage[],
-    messageListRenderOptions: MessageListRenderOptions
-): void {
-    const listElement = container.createDiv({ cls: "vault-wizard-message-list" });
+function getVisibleMessages(messages: ChatMessage[]): ChatMessage[] {
+    return messages.filter((chatMessage) => chatMessage.role !== "system" && chatMessage.role !== "developer");
+}
 
-    const chatMessageRenderer = new ChatMessageRenderer({
-        app: messageListRenderOptions.app,
-        component: messageListRenderOptions.component,
-        sourcePath: messageListRenderOptions.sourcePath
-    });
+function shouldRenderAsPlainText(
+    chatMessage: ChatMessage,
+    messageIndex: number,
+    totalMessages: number,
+    isStreaming: boolean
+): boolean {
+    if (!isStreaming) return false;
+    const isLastVisibleMessage = messageIndex === totalMessages - 1;
+    return chatMessage.role === "assistant" && isLastVisibleMessage;
+}
 
-    for (const chatMessage of messages) {
-        
-        if (chatMessage.role === "system" || chatMessage.role === "developer") {
-            continue;
+export class MessageListViewUpdater {
+    private readonly listElement: HTMLElement;
+    private readonly renderedEntries: RenderedMessageEntry[] = [];
+    private currentSourcePath = "";
+    private markdownRenderer: ChatMessageRenderer | null = null;
+
+    constructor(private readonly container: HTMLElement) {
+        this.listElement = this.container.createDiv({ cls: "vault-wizard-message-list" });
+    }
+
+    sync(messages: ChatMessage[], messageListRenderOptions: MessageListRenderOptions): void {
+        this.ensureRenderer(messageListRenderOptions);
+
+        const visibleMessages = getVisibleMessages(messages);
+
+        if (this.requiresFullRerender(visibleMessages)) {
+            this.fullRerender(visibleMessages, messageListRenderOptions.isStreaming);
+            return;
         }
 
-        const messageRowElement = listElement.createDiv({
+        this.applyIncrementalUpdates(visibleMessages, messageListRenderOptions.isStreaming);
+        this.scrollToBottom();
+    }
+
+    clear(): void {
+        this.renderedEntries.splice(0, this.renderedEntries.length);
+        this.listElement.empty();
+    }
+
+    private ensureRenderer(messageListRenderOptions: MessageListRenderOptions): void {
+        if (
+            this.markdownRenderer &&
+            this.currentSourcePath === messageListRenderOptions.sourcePath
+        ) {
+            return;
+        }
+
+        this.currentSourcePath = messageListRenderOptions.sourcePath;
+        this.markdownRenderer = new ChatMessageRenderer({
+            app: messageListRenderOptions.app,
+            component: messageListRenderOptions.component,
+            sourcePath: messageListRenderOptions.sourcePath
+        });
+    }
+
+    private requiresFullRerender(nextMessages: ChatMessage[]): boolean {
+        if (nextMessages.length < this.renderedEntries.length) return true;
+
+        for (let messageIndex = 0; messageIndex < this.renderedEntries.length; messageIndex += 1) {
+            const existingEntry = this.renderedEntries[messageIndex];
+            const nextMessage = nextMessages[messageIndex];
+            if (!nextMessage) return true;
+
+            const sameIdentity =
+                existingEntry.role === nextMessage.role &&
+                existingEntry.timestamp === nextMessage.timestamp;
+
+            if (!sameIdentity) return true;
+        }
+
+        return false;
+    }
+
+    private fullRerender(nextMessages: ChatMessage[], isStreaming: boolean): void {
+        this.listElement.empty();
+        this.renderedEntries.splice(0, this.renderedEntries.length);
+
+        for (let messageIndex = 0; messageIndex < nextMessages.length; messageIndex += 1) {
+            const nextMessage = nextMessages[messageIndex];
+            this.appendMessage(nextMessage, messageIndex, nextMessages.length, isStreaming);
+        }
+
+        this.scrollToBottom();
+    }
+
+    private applyIncrementalUpdates(nextMessages: ChatMessage[], isStreaming: boolean): void {
+        const previousLength = this.renderedEntries.length;
+
+        for (let messageIndex = 0; messageIndex < nextMessages.length; messageIndex += 1) {
+            const nextMessage = nextMessages[messageIndex];
+
+            if (messageIndex >= previousLength) {
+                this.appendMessage(nextMessage, messageIndex, nextMessages.length, isStreaming);
+                continue;
+            }
+
+            const existingEntry = this.renderedEntries[messageIndex];
+            const nextShouldBePlainText = shouldRenderAsPlainText(
+                nextMessage,
+                messageIndex,
+                nextMessages.length,
+                isStreaming
+            );
+
+            const didContentChange = existingEntry.content !== nextMessage.content;
+            const didRenderModeChange = existingEntry.renderedAsPlainText !== nextShouldBePlainText;
+
+            if (!didContentChange && !didRenderModeChange) continue;
+
+            this.renderMessageContent(existingEntry.contentElement, nextMessage.content, nextShouldBePlainText);
+
+            existingEntry.content = nextMessage.content;
+            existingEntry.renderedAsPlainText = nextShouldBePlainText;
+        }
+    }
+
+    private appendMessage(
+        chatMessage: ChatMessage,
+        messageIndex: number,
+        totalMessages: number,
+        isStreaming: boolean
+    ): void {
+        const messageRowElement = this.listElement.createDiv({
             cls: `vault-wizard-message-row vault-wizard-message-row-${chatMessage.role}`
         });
 
@@ -62,8 +179,40 @@ export function renderMessageList(
             cls: "vault-wizard-message-content markdown-rendered"
         });
 
-        chatMessageRenderer.renderMarkdown(messageContentElement, chatMessage.content);
+        const renderAsPlainText = shouldRenderAsPlainText(
+            chatMessage,
+            messageIndex,
+            totalMessages,
+            isStreaming
+        );
+
+        this.renderMessageContent(messageContentElement, chatMessage.content, renderAsPlainText);
+
+        this.renderedEntries.push({
+            role: chatMessage.role,
+            timestamp: chatMessage.timestamp,
+            content: chatMessage.content,
+            contentElement: messageContentElement,
+            renderedAsPlainText: renderAsPlainText
+        });
     }
 
-    listElement.scrollTop = listElement.scrollHeight;
+    private renderMessageContent(
+        messageContentElement: HTMLElement,
+        content: string,
+        renderAsPlainText: boolean
+    ): void {
+        messageContentElement.empty();
+
+        if (renderAsPlainText) {
+            messageContentElement.setText(content);
+            return;
+        }
+
+        this.markdownRenderer?.renderMarkdown(messageContentElement, content);
+    }
+
+    private scrollToBottom(): void {
+        this.listElement.scrollTop = this.listElement.scrollHeight;
+    }
 }
