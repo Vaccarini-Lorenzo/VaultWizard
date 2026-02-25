@@ -3,7 +3,7 @@ import { ChatHistorySession } from "../../models/chat/ChatHistorySession";
 
 interface ChatHistorySidebarRenderOptions {
     sessions: readonly ChatHistorySession[];
-    activechatId: string;
+    activeChatId: string;
     onSelectConversation: (chatId: string) => void;
 }
 
@@ -47,7 +47,7 @@ export function renderChatHistorySidebar(
 
     for (const chatHistorySession of sortedChatHistorySessions) {
         const isActiveSession =
-            chatHistorySession.chatId === chatHistorySidebarRenderOptions.activechatId;
+            chatHistorySession.chatId === chatHistorySidebarRenderOptions.activeChatId;
 
         const rowElement = listElement.createEl("button", {
             cls: `vault-wizard-history-item ${isActiveSession ? "is-active" : ""}`

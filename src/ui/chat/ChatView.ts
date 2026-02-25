@@ -12,6 +12,7 @@ import { renderSettingsPanel } from "ui/settings/SettingsPanel";
 import { renderAddModelPanel } from "ui/settings/AddModelPanel";
 import { MessageListViewUpdater } from "./MessageList";
 import { UiPanel } from "../../models/misc/UiPanel";
+import { ChatHistorySidebarViewUpdater } from "../chat_history/ChatHistorySidebarViewUpdater";
 
 export class ChatView extends ItemView {
     private unsubscribe?: () => void;
@@ -28,6 +29,7 @@ export class ChatView extends ItemView {
     private composerShellElement: HTMLElement | null = null;
     private historyOverlayElement: HTMLElement | null = null;
     private messageListViewUpdater: MessageListViewUpdater | null = null;
+    private historySidebarViewUpdater: ChatHistorySidebarViewUpdater | null = null;
 
     constructor(
         leaf: WorkspaceLeaf,
@@ -219,6 +221,7 @@ export class ChatView extends ItemView {
         if (!this.historySidebarOpen) {
             this.historyOverlayElement?.remove();
             this.historyOverlayElement = null;
+            this.historySidebarViewUpdater = null;
             return;
         }
 
@@ -226,17 +229,20 @@ export class ChatView extends ItemView {
             this.historyOverlayElement = this.chatBodyShellElement.createDiv({
                 cls: "vault-wizard-history-overlay"
             });
+
+            this.historySidebarViewUpdater = new ChatHistorySidebarViewUpdater(
+                this.historyOverlayElement,
+                (chatId) => {
+                    this.controller.openConversationFromHistory(chatId);
+                    this.historySidebarOpen = false;
+                    this.scheduleRender();
+                }
+            );
         }
 
-        this.historyOverlayElement.empty();
-        renderChatHistorySidebar(this.historyOverlayElement, {
+        this.historySidebarViewUpdater?.sync({
             sessions: this.controller.getChatHistorySessions(),
-            activechatId: this.controller.getchatId(),
-            onSelectConversation: (chatId) => {
-                this.controller.openConversationFromHistory(chatId);
-                this.historySidebarOpen = false;
-                this.scheduleRender();
-            }
+            activeChatId: this.controller.getchatId()
         });
     }
 
@@ -250,6 +256,7 @@ export class ChatView extends ItemView {
         this.selectedContextBadgeShellElement = null;
         this.composerShellElement = null;
         this.historyOverlayElement = null;
+        this.historySidebarViewUpdater = null;
         this.messageListViewUpdater = null;
     }
 }

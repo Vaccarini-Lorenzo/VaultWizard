@@ -370,7 +370,7 @@ export class ChatController {
             content: context,
             timestamp: Date.now()
         };
-        
+
         currentChatStorage.appendMessage(contextMessage);
 
         const assistantMessage: ChatMessage = {
@@ -391,19 +391,12 @@ export class ChatController {
 
         let capturedTokenUsage: TokenUsage | null = null;
         let capturedErrorMessage: string | null = null;
-         // To avoid UI update too frequently, we batch the updates from LLM and update the UI every 20 chunks or when the response is completed (whichever comes first).
-        const max_chunks = 0;
+
         try {
-            let num_chunk = 0
             const invocationResult = await this.llmController.streamAssistantReply(input, (chunk) => {
                 assistantMessage.content += chunk;
-                num_chunk += 1
-                if (num_chunk >= max_chunks) {
-                    num_chunk = 0
-                    this.notify();
-                }
+                this.notify();
             });
-            this.notify();
 
             capturedTokenUsage = invocationResult.tokenUsage ?? null;
         } catch (error) {
