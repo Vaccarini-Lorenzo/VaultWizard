@@ -12,11 +12,15 @@
     justify-content: space-between;
     border-bottom: 1px solid var(--background-modifier-border);
     padding-bottom: 6px;
+    gap: 8px;
+    min-width: 0;
 }
 
 .vault-wizard-title {
     margin: 0;
     font-size: 14px;
+    min-width: 0;
+    flex: 0 1 auto;
 }
 
 .vault-wizard-icon-btn,
@@ -32,6 +36,10 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    min-width: 0;
+    flex: 1 1 auto;
+    justify-content: flex-end;
+    flex-wrap: wrap;
 }
 
 .vault-wizard-settings-wrap {
@@ -447,6 +455,7 @@
     max-width: 220px;
     height: 30px;
     font-size: 12px;
+    flex: 1 1 170px;
 }
 
 .vault-wizard-new-chat-btn {
@@ -732,4 +741,46 @@
     text-align: left;
     color: var(--text-muted);
     font-size: 11px;
+}
+
+@media (max-width: 720px) {
+    .vault-wizard-header {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .vault-wizard-title {
+        flex: 1 1 100%;
+    }
+
+    .vault-wizard-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .vault-wizard-header-model-select {
+        min-width: 0;
+        max-width: none;
+        flex: 1 1 100%;
+    }
+
+    .vault-wizard-icon-btn {
+        padding: 6px;
+    }
+
+    .vault-wizard-btn-label {
+        display: none;
+    }
+
+    .vault-wizard-message {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 560px) {
+    .vault-wizard-history-sidebar {
+        width: calc(100% - 8px);
+        min-width: 0;
+        margin: 4px;
+    }
 }

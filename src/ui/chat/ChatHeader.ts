@@ -48,21 +48,19 @@ export function renderChatHeader(
     }
 
     const historyButton = controlsWrapper.createEl("button", {
-        cls: "vault-wizard-icon-btn",
-        text: "Chats"
+        cls: "vault-wizard-icon-btn vault-wizard-history-btn"
     });
     historyButton.setAttribute("aria-label", "Toggle older chats sidebar");
     setIcon(historyButton, "history");
-    historyButton.appendText(" Chats");
+    historyButton.createSpan({ cls: "vault-wizard-btn-label", text: " Chats" });
     historyButton.addEventListener("click", onToggleHistorySidebar);
 
     const embedConversationButton = controlsWrapper.createEl("button", {
-        cls: "vault-wizard-icon-btn",
-        text: "Embed"
+        cls: "vault-wizard-icon-btn vault-wizard-embed-btn"
     });
     embedConversationButton.setAttribute("aria-label", "Embed conversation reference in editor");
     setIcon(embedConversationButton, "link");
-    embedConversationButton.appendText(" Embed");
+    embedConversationButton.createSpan({ cls: "vault-wizard-btn-label", text: " Embed" });
     embedConversationButton.addEventListener("click", onEmbedConversationInEditor);
 
     const newChatButton = controlsWrapper.createEl("button", {
