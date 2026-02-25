@@ -17,6 +17,8 @@ interface RenderedMessageEntry {
     renderedAsPlainText: boolean;
 }
 
+const AUTO_SCROLL_BOTTOM_THRESHOLD_PX = 56;
+
 function formatMessageRole(chatMessage: ChatMessage): string {
     return chatMessage.role === "user" ? "You" : "Assistant";
 }
@@ -54,15 +56,22 @@ export class MessageListViewUpdater {
     sync(messages: ChatMessage[], messageListRenderOptions: MessageListRenderOptions): void {
         this.ensureRenderer(messageListRenderOptions);
 
+        const shouldKeepBottomAnchored = this.shouldKeepBottomAnchored();
         const visibleMessages = getVisibleMessages(messages);
 
         if (this.requiresFullRerender(visibleMessages)) {
-            this.fullRerender(visibleMessages, messageListRenderOptions.isStreaming);
+            this.fullRerender(visibleMessages, messageListRenderOptions.isStreaming, shouldKeepBottomAnchored);
             return;
         }
 
-        this.applyIncrementalUpdates(visibleMessages, messageListRenderOptions.isStreaming);
-        this.scrollToBottom();
+        const didUpdateMessageList = this.applyIncrementalUpdates(
+            visibleMessages,
+            messageListRenderOptions.isStreaming
+        );
+
+        if (didUpdateMessageList && shouldKeepBottomAnchored) {
+            this.scrollToBottom();
+        }
     }
 
     clear(): void {
@@ -104,7 +113,11 @@ export class MessageListViewUpdater {
         return false;
     }
 
-    private fullRerender(nextMessages: ChatMessage[], isStreaming: boolean): void {
+    private fullRerender(
+        nextMessages: ChatMessage[],
+        isStreaming: boolean,
+        shouldKeepBottomAnchored: boolean
+    ): void {
         this.listElement.empty();
         this.renderedEntries.splice(0, this.renderedEntries.length);
 
@@ -113,17 +126,21 @@ export class MessageListViewUpdater {
             this.appendMessage(nextMessage, messageIndex, nextMessages.length, isStreaming);
         }
 
-        this.scrollToBottom();
+        if (shouldKeepBottomAnchored) {
+            this.scrollToBottom();
+        }
     }
 
-    private applyIncrementalUpdates(nextMessages: ChatMessage[], isStreaming: boolean): void {
+    private applyIncrementalUpdates(nextMessages: ChatMessage[], isStreaming: boolean): boolean {
         const previousLength = this.renderedEntries.length;
+        let didUpdateMessageList = false;
 
         for (let messageIndex = 0; messageIndex < nextMessages.length; messageIndex += 1) {
             const nextMessage = nextMessages[messageIndex];
 
             if (messageIndex >= previousLength) {
                 this.appendMessage(nextMessage, messageIndex, nextMessages.length, isStreaming);
+                didUpdateMessageList = true;
                 continue;
             }
 
@@ -144,7 +161,10 @@ export class MessageListViewUpdater {
 
             existingEntry.content = nextMessage.content;
             existingEntry.renderedAsPlainText = nextShouldBePlainText;
+            didUpdateMessageList = true;
         }
+
+        return didUpdateMessageList;
     }
 
     private appendMessage(
@@ -210,6 +230,18 @@ export class MessageListViewUpdater {
         }
 
         this.markdownRenderer?.renderMarkdown(messageContentElement, content);
+    }
+
+    private shouldKeepBottomAnchored(): boolean {
+        const hasVerticalOverflow = this.listElement.scrollHeight > this.listElement.clientHeight + 1;
+        if (!hasVerticalOverflow) return true;
+        return this.isNearBottom();
+    }
+
+    private isNearBottom(): boolean {
+        const distanceFromBottom =
+            this.listElement.scrollHeight - this.listElement.scrollTop - this.listElement.clientHeight;
+        return distanceFromBottom <= AUTO_SCROLL_BOTTOM_THRESHOLD_PX;
     }
 
     private scrollToBottom(): void {

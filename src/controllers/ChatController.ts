@@ -69,10 +69,8 @@ export class ChatController {
 
     resetChatAndStartNewConversation(): void {
         this.persistCurrentConversationIfNeeded();
-
-        this.chatId = this.chatIdFactory
-.createchatId();
- currentChatStorage.clear(this.chatId);
+        this.chatId = this.chatIdFactory.createchatId();
+        currentChatStorage.clear(this.chatId);
         debugTraceStorage.clear(this.chatId);
         this.streaming = false;
         this.notify();
