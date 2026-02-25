@@ -128,11 +128,18 @@ export class ChatView extends ItemView {
 
             this.chatMainElement = this.chatBodyShellElement.createDiv({ cls: "vault-wizard-chat-main" });
 
-            const messageListShellElement = this.chatMainElement.createDiv();
+            const messageListShellElement = this.chatMainElement.createDiv({
+                cls: "vault-wizard-message-list-shell"
+            });
             this.messageListViewUpdater = new MessageListViewUpdater(messageListShellElement);
 
-            this.selectedContextBadgeShellElement = this.chatMainElement.createDiv();
-            this.composerShellElement = this.chatMainElement.createDiv();
+            this.selectedContextBadgeShellElement = this.chatMainElement.createDiv({
+                cls: "vault-wizard-selected-context-badge-shell"
+            });
+
+            this.composerShellElement = this.chatMainElement.createDiv({
+                cls: "vault-wizard-chat-composer-shell"
+            });
 
             this.renderedPanel = "chat";
             return;

@@ -568,6 +568,24 @@
     min-height: 0;
 }
 
+/* Ensure only messages area grows/shrinks and scrolls */
+.vault-wizard-message-list-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Keep composer visually anchored at bottom */
+.vault-wizard-chat-composer-shell {
+    flex: 0 0 auto;
+}
+
+/* Keep optional selected-context badge above composer without affecting scroll */
+.vault-wizard-selected-context-badge-shell {
+    flex: 0 0 auto;
+}
+
 /* ===== Chat layout fix (prevents compression) ===== */
 .vault-wizard-chat-header-shell {
     flex: 0 0 auto;
