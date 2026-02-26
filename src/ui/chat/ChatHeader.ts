@@ -13,7 +13,6 @@ export function renderChatHeader(
     onToggleHistorySidebar: () => void
 ) {
     const header = container.createDiv({ cls: "vault-wizard-header" });
-    header.createEl("h3", { text: "Vault Wizard", cls: "vault-wizard-title" });
 
     const controlsWrapper = header.createDiv({ cls: "vault-wizard-header-actions" });
 

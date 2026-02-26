@@ -106,14 +106,23 @@ export default class ObsidianAiHelperPlugin extends Plugin {
     }
 
     private async toggleChat(): Promise<void> {
-        const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_AI_HELPER);
+        const chatLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_AI_HELPER);
 
-        if (leaves.length > 0) {
-            leaves.forEach((leaf) => leaf.detach());
+        if (chatLeaves.length > 0) {
+            chatLeaves.forEach((leaf) => leaf.detach());
+            this.collapseRightSidebar();
             return;
         }
 
         await this.openChatView();
+    }
+
+    private collapseRightSidebar(): void {
+        const workspaceWithRightSplit = this.app.workspace as unknown as {
+            rightSplit?: { collapse?: () => void };
+        };
+
+        workspaceWithRightSplit.rightSplit?.collapse?.();
     }
 
     private async openChatView(): Promise<void> {
