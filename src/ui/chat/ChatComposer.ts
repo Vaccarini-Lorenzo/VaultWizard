@@ -1,3 +1,5 @@
+import { chatComposerDraftStorage } from "services/chat/ChatComposerDraftStorage";
+
 export function renderChatComposer(
     container: HTMLElement,
     onSend: (value: string) => Promise<void>,
@@ -9,6 +11,8 @@ export function renderChatComposer(
         cls: "vault-wizard-input",
         attr: { placeholder: "Type message (/c for current note content)..." }
     });
+
+    input.value = chatComposerDraftStorage.loadText();
 
     const send = composer.createEl("button", {
         cls: "vault-wizard-send-btn",
@@ -33,7 +37,9 @@ export function renderChatComposer(
     input.addEventListener("keydown", async (keyboardEvent) => {
         if (keyboardEvent.key === "Enter" && !keyboardEvent.shiftKey) {
             keyboardEvent.preventDefault();
+            chatComposerDraftStorage.clearDraft();
             await submit();
         }
+        chatComposerDraftStorage.saveDraft(input.value);
     });
 }
