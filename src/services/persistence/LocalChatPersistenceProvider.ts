@@ -1,9 +1,8 @@
-import { App } from "obsidian";
+import { App, DataAdapter } from "obsidian";
 import { ChatMessage } from "../../models/chat/ChatMessage";
 import { DebugTurnTrace } from "../../models/debug/DebugTurnTrace";
 import { ChatPersistenceProvider, PersistedConversation } from "./ChatPersistenceProvider";
 import { LocalChatPersistenceProviderOptions } from "../../models/persistence/LocalChatPersistenceProviderOptions";
-import { VaultAdapterLike } from "../../models/persistence/VaultAdapter";
 import { PersistedConversationFilePayload } from "../../models/persistence/PersistedConversationFilePayload";
 import path from "path";
 
@@ -82,14 +81,23 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
         return this.readConversationFile(vaultAdapter, conversationFilePath);
     }
 
-    private async ensureBaseFolder(vaultAdapter: VaultAdapterLike): Promise<void> {
+    async delete(chatId: string): Promise<void> {
+        const vaultAdapter = this.getVaultAdapter();
+        const conversationFilePath = this.buildConversationFilePath(chatId);
+        const fileExists = await vaultAdapter.exists(conversationFilePath);
+
+        if (!fileExists) return;
+        await vaultAdapter.remove(conversationFilePath);
+    }
+
+    private async ensureBaseFolder(vaultAdapter: DataAdapter): Promise<void> {
         const folderExists = await vaultAdapter.exists(this.chatFolderPath);
         if (folderExists) return;
         await vaultAdapter.mkdir(this.chatFolderPath);
     }
 
     private async readConversationFile(
-        vaultAdapter: VaultAdapterLike,
+        vaultAdapter: DataAdapter,
         conversationFilePath: string
     ): Promise<PersistedConversation | null> {
         try {
@@ -156,7 +164,7 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
         return Date.now();
     }
 
-    private getVaultAdapter(): VaultAdapterLike {
-        return this.app.vault.adapter as unknown as VaultAdapterLike;
+    private getVaultAdapter(): DataAdapter {
+        return this.app.vault.adapter;
     }
 }

@@ -5,6 +5,7 @@ interface ChatHistorySidebarRenderOptions {
     sessions: readonly ChatHistorySession[];
     activeChatId: string;
     onSelectConversation: (chatId: string) => void;
+    onDeleteConversation?: (chatId: string) => void;
 }
 
 function formatHistoryTimestamp(updatedAt: number): string {
@@ -53,14 +54,34 @@ export function renderChatHistorySidebar(
             cls: `vault-wizard-history-item ${isActiveSession ? "is-active" : ""}`
         });
 
-        rowElement.createDiv({
+        const contentElement = rowElement.createDiv({ cls: "vault-wizard-history-item-content" });
+        contentElement.createDiv({
             cls: "vault-wizard-history-item-title",
             text: chatHistorySession.title
         });
 
-        rowElement.createDiv({
+        contentElement.createDiv({
             cls: "vault-wizard-history-item-time",
             text: formatHistoryTimestamp(chatHistorySession.updatedAt)
+        });
+
+        const deleteButton = rowElement.createEl("button", {
+            cls: "vault-wizard-history-item-delete",
+            attr: {
+                type: "button",
+                "aria-label": "Delete chat",
+                title: "Delete chat"
+            }
+        });
+        setIcon(deleteButton, "trash");
+
+        deleteButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (typeof chatHistorySidebarRenderOptions.onDeleteConversation === "function") {
+                chatHistorySidebarRenderOptions.onDeleteConversation(chatHistorySession.chatId);
+            }
         });
 
         rowElement.addEventListener("click", () => {

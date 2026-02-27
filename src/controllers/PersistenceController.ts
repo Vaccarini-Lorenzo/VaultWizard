@@ -60,6 +60,10 @@ export class PersistenceController {
         return this.activeProvider.get(chatId);
     }
 
+    delete(chatId: string): Promise<void> {
+        return this.activeProvider.delete(chatId);
+    }
+
     private createLocalProvider(folderPath?: string): ChatPersistenceProviderContract {
         return new LocalChatPersistenceProvider(this.dependencies.app, {
             folderPath,

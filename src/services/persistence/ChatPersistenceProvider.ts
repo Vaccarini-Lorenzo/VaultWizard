@@ -13,4 +13,5 @@ export interface ChatPersistenceProvider {
     getMostRecent(maxConversationCount: number): Promise<readonly PersistedConversation[]>;
     update(chatId: string): Promise<void>;
     get(chatId: string): Promise<PersistedConversation | null>;
+    delete(chatId: string): Promise<void>;
 }

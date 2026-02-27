@@ -1,5 +1,6 @@
+import { DebugTurnTrace } from "models/debug/DebugTurnTrace";
 import { ChatMessage } from "../chat/ChatMessage";
-import { DebugTurnTrace } from "./DebugTurnTrace";
+
 
 export interface PersistedConversationFilePayload {
     chatId: string;

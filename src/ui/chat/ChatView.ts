@@ -5,7 +5,6 @@ import { renderDebugPanel } from "../debug/DebugPanel";
 import { renderChatComposer } from "./ChatComposer";
 import { renderChatHeader } from "./ChatHeader";
 import { renderSelectedContextBadge } from "./SelectedContextBadge";
-import { renderChatHistorySidebar } from "../chat_history/ChatHistorySidebar";
 import { currentChatStorage } from "services/chat/CurrentChatStorage";
 import { selectedContextStorage } from "services/context/SelectedContextStorage";
 import { renderSettingsPanel } from "ui/settings/SettingsPanel";
@@ -236,6 +235,18 @@ export class ChatView extends ItemView {
                     this.controller.openConversationFromHistory(chatId);
                     this.historySidebarOpen = false;
                     this.scheduleRender();
+                },
+                (chatId) => {
+                    if (chatId === this.controller.getchatId()){
+                        this.controller.resetChatAndStartNewConversation();
+                    }
+                    
+                    this.controller.deleteConversation(chatId).then(() => {
+                    this.historySidebarViewUpdater?.sync({
+                        sessions: this.controller.getChatHistorySessions(),
+                        activeChatId: this.controller.getchatId()
+                    });
+                    })
                 }
             );
         }

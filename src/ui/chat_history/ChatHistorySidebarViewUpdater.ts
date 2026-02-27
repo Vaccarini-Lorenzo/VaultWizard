@@ -11,7 +11,8 @@ export class ChatHistorySidebarViewUpdater {
 
     constructor(
         private readonly container: HTMLElement,
-        private readonly onSelectConversation: (chatId: string) => void
+        private readonly onSelectConversation: (chatId: string) => void,
+        private readonly onDeleteConversation: (chatId: string) => void
     ) {}
 
     sync(snapshot: ChatHistorySidebarSnapshot): void {
@@ -24,7 +25,8 @@ export class ChatHistorySidebarViewUpdater {
         renderChatHistorySidebar(this.container, {
             sessions: snapshot.sessions,
             activeChatId: snapshot.activeChatId,
-            onSelectConversation: this.onSelectConversation
+            onSelectConversation: this.onSelectConversation,
+            onDeleteConversation: this.onDeleteConversation
         });
     }
 

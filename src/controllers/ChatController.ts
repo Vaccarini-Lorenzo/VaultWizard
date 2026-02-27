@@ -69,8 +69,8 @@ export class ChatController {
     }
 
     resetChatAndStartNewConversation(): void {
-        this.persistCurrentConversationIfNeeded();
         this.chatId = this.chatIdFactory.createchatId();
+        this.persistCurrentConversationIfNeeded();
         systemPromptService.resetSystemPrompt();
         currentChatStorage.clear(this.chatId);
         debugTraceStorage.clear(this.chatId);
@@ -417,11 +417,6 @@ export class ChatController {
                 assistantResponse: assistantMessage.content,
                 tokenUsage: capturedTokenUsage,
                 context, 
-                request: {
-                    prompt: input,
-                    context,
-                    selectedContext: selectedContextSnapshot
-                },
                 responseMetadata: {
                     chatId: this.chatId,
                     provider: selectedConfiguredModel?.provider ?? null,
@@ -444,6 +439,11 @@ export class ChatController {
         if (!conversationEmbedMarkdown) return false;
 
         return this.noteService.insertTextAtCursor(conversationEmbedMarkdown);
+    }
+
+    async deleteConversation(chatId: string): Promise<void> {
+        await this.persistenceController.delete(chatId);
+        await this.refreshChatHistorySessions();
     }
 
     private setActivePanel(nextPanel: UiPanel): void {
