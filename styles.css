@@ -4,6 +4,10 @@
     height: 100%;
     padding: 8px;
     gap: 8px;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .vault-wizard-header {
@@ -14,22 +18,10 @@
     padding-bottom: 6px;
     gap: 8px;
     min-width: 0;
-}
-
-.vault-wizard-title {
-    margin: 0;
-    font-size: 14px;
-    min-width: 0;
-    flex: 0 1 auto;
-}
-
-.vault-wizard-icon-btn,
-.vault-wizard-send-btn {
-    cursor: pointer;
-    border: 1px solid var(--background-modifier-border);
-    background: var(--background-secondary);
-    border-radius: 6px;
-    padding: 6px 8px;
+    width: 100%;
+    max-width: 100%;
+    flex-wrap: wrap;
+    box-sizing: border-box;
 }
 
 .vault-wizard-header-actions {
@@ -37,108 +29,67 @@
     align-items: center;
     gap: 6px;
     min-width: 0;
-    flex: 1 1 auto;
+    flex: 1 1 0;
     justify-content: flex-end;
     flex-wrap: wrap;
+    width: 100%;
 }
 
-.vault-wizard-settings-wrap {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.vault-wizard-settings-subtitle {
-    margin: 0;
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
-.vault-wizard-settings-description {
-    margin: 0;
+.vault-wizard-header-model-select {
+    min-width: 120px;
+    max-width: 100%;
+    height: 30px;
     font-size: 12px;
-    color: var(--text-muted);
-    line-height: 1.45;
+    flex: 1 1 170px;
 }
 
-.vault-wizard-settings-card {
+.vault-wizard-chat-body-shell {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.vault-wizard-chat-body-shell .vault-wizard-chat-main {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+}
+
+.vault-wizard-message-list-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    min-height: 0;
-}
-
-.vault-wizard-settings-list {
-    background: var(--background-primary-alt, var(--background-primary));
-}
-
-.vault-wizard-settings-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 6px;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    transition: background 120ms ease, border-color 120ms ease;
-}
-
-.vault-wizard-settings-row:hover {
-    background: color-mix(in srgb, var(--background-secondary) 78%, transparent);
-    border-color: var(--background-modifier-border);
-}
-
-.vault-wizard-settings-provider-badge {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    color: var(--text-accent);
-    background: color-mix(in srgb, var(--interactive-accent) 16%, transparent);
-    border: 1px solid color-mix(in srgb, var(--interactive-accent) 32%, transparent);
-    border-radius: 999px;
-    padding: 2px 8px;
-}
-
-.vault-wizard-settings-model-name {
-    color: var(--text-normal);
-    word-break: break-word;
-    flex: 1;
-    min-width: 0;
-}
-
-.vault-wizard-settings-row-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-left: auto;
-}
-
-.vault-wizard-settings-edit-btn:hover {
-    border-color: color-mix(in srgb, var(--interactive-accent) 45%, var(--background-modifier-border));
-    background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
-}
-
-.vault-wizard-settings-delete-btn {
-    color: var(--text-error);
-}
-
-.vault-wizard-settings-delete-btn:hover {
-    border-color: color-mix(in srgb, var(--text-error) 45%, var(--background-modifier-border));
-    background: color-mix(in srgb, var(--text-error) 12%, transparent);
 }
 
 .vault-wizard-message-list {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 2px 4px 2px 2px;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .vault-wizard-message-row {
     display: flex;
     width: 100%;
+    min-width: 0;
 }
 
 .vault-wizard-message-row-user {
@@ -152,7 +103,7 @@
 .vault-wizard-message {
     padding: 10px 12px;
     border-radius: 12px;
-    max-width: 92%;
+    max-width: min(92%, 100%);
     user-select: text;
     white-space: normal;
     word-break: break-word;
@@ -161,6 +112,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    box-sizing: border-box;
 }
 
 .vault-wizard-user {
