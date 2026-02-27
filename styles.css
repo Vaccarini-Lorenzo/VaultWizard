@@ -149,6 +149,7 @@
 
 .vault-wizard-message-content {
     line-height: 1.5;
+    font-size: 22px;
 }
 
 .vault-wizard-message-content > *:first-child {
@@ -572,6 +573,7 @@
     padding-right: 4px;
 }
 
+
 /* =========================================
    History sidebar + items (single definition)
    ========================================= */
@@ -736,4 +738,58 @@
         min-width: 0;
         margin: 4px;
     }
+}
+
+.vault-wizard-settings-actions {
+    padding: 15px ;
+}
+
+.vault-wizard-settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: nowrap;
+}
+
+.vault-wizard-settings-model-identity {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    border: 1px solid color-mix(in srgb, var(--interactive-accent) 55%, var(--background-modifier-border));
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--interactive-accent) 20%, transparent) inset,
+        0 0 10px color-mix(in srgb, var(--interactive-accent) 30%, transparent);
+}
+
+.vault-wizard-settings-model-name {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+.vault-wizard-settings-row-actions {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.vault-wizard-settings-action-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 4px;
+}
+
+.vault-wizard-settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }

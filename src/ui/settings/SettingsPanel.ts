@@ -1,4 +1,4 @@
-import { Notice } from "obsidian";
+import { Notice, setIcon } from "obsidian";
 import { renderPersistenceSettingsForm } from "./PersistenceSettingsForm";
 import { ChatController } from "controllers/ChatController";
 
@@ -39,11 +39,13 @@ export function renderSettingsPanel(container: HTMLElement, controller: ChatCont
     } else {
         for (const configuredModel of configuredModels) {
             const modelRow = modelListContainer.createDiv({ cls: "vault-wizard-settings-row" });
-            modelRow.createSpan({
+
+            const modelIdentity = modelRow.createDiv({ cls: "vault-wizard-settings-model-identity" });
+            modelIdentity.createSpan({
                 cls: "vault-wizard-settings-provider-badge",
                 text: configuredModel.provider
             });
-            modelRow.createSpan({
+            modelIdentity.createSpan({
                 cls: "vault-wizard-settings-model-name",
                 text: configuredModel.modelName
             });
@@ -51,18 +53,18 @@ export function renderSettingsPanel(container: HTMLElement, controller: ChatCont
             const rowActions = modelRow.createDiv({ cls: "vault-wizard-settings-row-actions" });
 
             const editButton = rowActions.createEl("button", {
-                cls: "vault-wizard-icon-btn vault-wizard-ghost-btn vault-wizard-settings-edit-btn",
-                text: "Edit"
+                cls: "vault-wizard-icon-btn vault-wizard-ghost-btn vault-wizard-settings-edit-btn vault-wizard-settings-action-icon-btn",
+                attr: { "aria-label": "Edit model", title: "Edit" }
             });
-            editButton.addEventListener("click", () => {
-                controller.openEditModelPanel(configuredModel.id);
-            });
+            setIcon(editButton, "pencil");
+            editButton.addEventListener("click", () => controller.openEditModelPanel(configuredModel.id));
 
-            const deleteButton = rowActions.createEl("button", {
-                cls: "vault-wizard-icon-btn vault-wizard-ghost-btn vault-wizard-settings-delete-btn",
-                text: "Delete"
+            const removeButton = rowActions.createEl("button", {
+                cls: "vault-wizard-icon-btn vault-wizard-ghost-btn vault-wizard-settings-delete-btn vault-wizard-settings-action-icon-btn",
+                attr: { "aria-label": "Remove model", title: "Remove" }
             });
-            deleteButton.addEventListener("click", async () => {
+            setIcon(removeButton, "trash-2");
+            removeButton.addEventListener("click", async () => {
                 const confirmed = window.confirm(
                     `Delete model "${configuredModel.modelName}"? This action cannot be undone.`
                 );
@@ -73,7 +75,6 @@ export function renderSettingsPanel(container: HTMLElement, controller: ChatCont
             });
         }
     }
-
 
     const actionsWrapper = modelsCard.createDiv({ cls: "vault-wizard-settings-actions" });
     const addModelButton = actionsWrapper.createEl("button", {

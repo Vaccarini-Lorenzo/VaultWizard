@@ -3,30 +3,56 @@ import { AiProvider } from "models/llm/AiProvider";
 import { Notice } from "obsidian";
 import { renderProviderFields } from "./ProviderFields";
 
+type ProviderSettingInputElement = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
+function getProviderSettingElements(providerFieldsContainer: HTMLElement): NodeListOf<ProviderSettingInputElement> {
+    return providerFieldsContainer.querySelectorAll<ProviderSettingInputElement>(
+        "input[data-setting-key], textarea[data-setting-key], select[data-setting-key]"
+    );
+}
 
 function collectProviderSettings(providerFieldsContainer: HTMLElement): Record<string, string> {
     const providerSettings: Record<string, string> = {};
-    const providerInputs: any = providerFieldsContainer.querySelectorAll<HTMLInputElement>("input[data-setting-key]");
+    const providerInputElements: any = getProviderSettingElements(providerFieldsContainer);
 
-    for (const providerInput of providerInputs) {
-        const settingKey = providerInput.dataset.settingKey;
+    for (const providerInputElement of providerInputElements) {
+        const settingKey = providerInputElement.dataset.settingKey;
         if (!settingKey) continue;
-        providerSettings[settingKey] = providerInput.value.trim();
+        providerSettings[settingKey] = providerInputElement.value.trim();
     }
 
     return providerSettings;
 }
 
-function applyProviderSettings(
-    providerFieldsContainer: HTMLElement,
-    providerSettings: Record<string, string>
+function applyProviderSettings(providerFieldsContainer: HTMLElement, providerSettings: Record<string, string>
 ): void {
-    const providerInputs: any = providerFieldsContainer.querySelectorAll<HTMLInputElement>("input[data-setting-key]");
+    const providerInputElements: any = getProviderSettingElements(providerFieldsContainer);
 
-    for (const providerInput of providerInputs) {
-        const settingKey = providerInput.dataset.settingKey;
+    for (const providerInputElement of providerInputElements) {
+        const settingKey = providerInputElement.dataset.settingKey;
         if (!settingKey) continue;
-        providerInput.value = providerSettings[settingKey] ?? "";
+        providerInputElement.value = providerSettings[settingKey] ?? "";
+    }
+}
+
+function validateAdditionalJsonBody(additionalJsonBodyValue: string): void {
+    const trimmedAdditionalJsonBody = additionalJsonBodyValue.trim();
+    if (!trimmedAdditionalJsonBody) return;
+
+    let parsedAdditionalJsonBody: unknown;
+    try {
+        parsedAdditionalJsonBody = JSON.parse(trimmedAdditionalJsonBody);
+    } catch {
+        throw new Error(`"Additional JSON body" must be valid JSON.`);
+    }
+
+    const isObject =
+        typeof parsedAdditionalJsonBody === "object" &&
+        parsedAdditionalJsonBody !== null &&
+        !Array.isArray(parsedAdditionalJsonBody);
+
+    if (!isObject) {
+        throw new Error(`"Additional JSON body" must be a JSON object.`);
     }
 }
 
@@ -105,6 +131,26 @@ export function renderAddModelPanel(container: HTMLElement, controller: ChatCont
         applyProviderSettings(providerSpecificContainer, editingConfiguredModel.settings);
     }
 
+    const additionalJsonBodyFieldWrapper = formCard.createDiv({ cls: "vault-wizard-form-field" });
+    additionalJsonBodyFieldWrapper.createEl("label", {
+        cls: "vault-wizard-form-label",
+        text: "Additional JSON body (optional)"
+    });
+
+    const additionalJsonBodyTextarea = additionalJsonBodyFieldWrapper.createEl("textarea", {
+        cls: "vault-wizard-form-input vault-wizard-form-textarea",
+        attr: {
+            rows: "6",
+            "data-setting-key": "additional_json_body",
+            placeholder: `{
+  "temperature": 0.2,
+  "top_p": 0.9
+}`
+        }
+    });
+
+    additionalJsonBodyTextarea.value = editingConfiguredModel?.settings?.additional_json_body ?? "";
+
     const actionsWrapper = formCard.createDiv({ cls: "vault-wizard-add-model-actions" });
     const saveButton = actionsWrapper.createEl("button", {
         cls: "vault-wizard-send-btn vault-wizard-add-model-save-btn",
@@ -126,6 +172,16 @@ export function renderAddModelPanel(container: HTMLElement, controller: ChatCont
         }
 
         const providerSettings = collectProviderSettings(providerSpecificContainer);
+        providerSettings.additional_json_body = additionalJsonBodyTextarea.value.trim();
+
+        try {
+            validateAdditionalJsonBody(providerSettings.additional_json_body);
+        } catch (error) {
+            const validationMessage =
+                error instanceof Error ? error.message : "Invalid Additional JSON body.";
+            new Notice(validationMessage);
+            return;
+        }
 
         if (editingConfiguredModel) {
             await controller.updateConfiguredModel(editingConfiguredModel.id, {
