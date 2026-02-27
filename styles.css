@@ -243,6 +243,7 @@
     min-height: 70px;
     resize: vertical;
     width: 100%;
+    font-size: 18px;
 }
 
 .vault-wizard-debug-wrap {

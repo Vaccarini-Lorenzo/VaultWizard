@@ -15,6 +15,7 @@ import { ChatHistorySession } from "../models/chat/ChatHistorySession";
 import { PersistenceController } from "./PersistenceController";
 import { createConversationEmbedMarkdown } from "../services/chat/ChatEmbedLinkBuilder";
 import { selectedContextStorage } from "services/context/SelectedContextStorage";
+import { systemPromptService } from "services/context/SystemPromptService";
 
 
 type Listener = () => void;
@@ -70,6 +71,7 @@ export class ChatController {
     resetChatAndStartNewConversation(): void {
         this.persistCurrentConversationIfNeeded();
         this.chatId = this.chatIdFactory.createchatId();
+        systemPromptService.resetSystemPrompt();
         currentChatStorage.clear(this.chatId);
         debugTraceStorage.clear(this.chatId);
         this.streaming = false;
@@ -363,6 +365,13 @@ export class ChatController {
             return;
         }
 
+        if (input.substring(0, 7) == "/system") {
+            const systemMessageContent = input.substring(7).trim();
+            systemPromptService.appendNewInstructions(systemMessageContent);
+            this.notify();
+            return;
+        }
+
         const contextMessage: ChatMessage = {
             role: "developer",
             content: context,
@@ -403,10 +412,11 @@ export class ChatController {
         } finally {
             debugTraceStorage.appendTrace({
                 timestamp: Date.now(),
+                systemPrompt: systemPromptService.getSystemPrompt(),
                 userPrompt: input,
-                context,
                 assistantResponse: assistantMessage.content,
                 tokenUsage: capturedTokenUsage,
+                context, 
                 request: {
                     prompt: input,
                     context,

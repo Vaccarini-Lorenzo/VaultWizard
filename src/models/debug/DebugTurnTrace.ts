@@ -1,12 +1,6 @@
 import { TokenUsage } from "models/llm/TokenUsage";
 
 
-export interface DebugRequestDetails {
-    prompt: string;
-    context: string;
-    selectedContext: string | null;
-}
-
 export interface DebugResponseMetadata {
     chatId: string;
     provider: string | null;
@@ -19,10 +13,10 @@ export interface DebugResponseMetadata {
 
 export interface DebugTurnTrace {
     timestamp: number;
+    systemPrompt: string;
     userPrompt: string;
     context: string;
     assistantResponse: string;
     tokenUsage: TokenUsage | null;
-    request: DebugRequestDetails;
     responseMetadata: DebugResponseMetadata;
 }

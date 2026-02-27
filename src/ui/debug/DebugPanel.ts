@@ -149,28 +149,22 @@ function openExpandedTraceView(debugTrace: DebugTurnTrace): void {
 }
 
 function buildRequestPreview(debugTrace: DebugTurnTrace): string {
-    const promptText = debugTrace.request?.prompt ?? debugTrace.userPrompt;
-    const contextText = debugTrace.request?.context ?? debugTrace.context;
-    const selectedContextText = debugTrace.request?.selectedContext ?? "none";
-    const normalizedContextText = contextText?.trim() ? contextText.trim() : "none";
-    const fullRequest = `prompt="${promptText}"\ncontext="${normalizedContextText}"\nselected="${selectedContextText}"`;
+    const normalizedContextText = debugTrace.context?.trim() ? debugTrace.context.trim() : "none";
+    const fullRequest = `prompt="${debugTrace.userPrompt}"\ncontext="${normalizedContextText}"`;
     return truncateText(fullRequest, REQUEST_PREVIEW_MAX_LENGTH);
 }
 
 function buildFullRequest(debugTrace: DebugTurnTrace): string {
-    const promptText = debugTrace.request?.prompt ?? debugTrace.userPrompt;
-    const contextText = debugTrace.request?.context ?? debugTrace.context;
-    const selectedContextText = debugTrace.request?.selectedContext ?? "none";
 
     return [
         "prompt:",
-        promptText || "none... wait how?",
+        debugTrace.userPrompt || "none... wait how?",
         "",
         "context:",
-        contextText || "none",
+        debugTrace.context || "none",
         "",
-        "selected context:",
-        selectedContextText
+        "system prompt:",
+        debugTrace.systemPrompt || "none"
     ].join("\n");
 }
 
