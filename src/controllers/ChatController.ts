@@ -372,13 +372,15 @@ export class ChatController {
             return;
         }
 
-        const contextMessage: ChatMessage = {
-            role: "developer",
-            content: context,
-            timestamp: Date.now()
-        };
-
-        currentChatStorage.appendMessage(contextMessage);
+        if (context) {
+            const contextMessage: ChatMessage = {
+                role: "developer",
+                content: context,
+                timestamp: Date.now()
+            };
+        
+            currentChatStorage.appendMessage(contextMessage);
+        }
 
         const assistantMessage: ChatMessage = {
             role: "assistant",
@@ -388,7 +390,6 @@ export class ChatController {
 
         currentChatStorage.appendMessage(assistantMessage);
 
-        const selectedContextSnapshot = this.serializeSelectedContext(selectedContextStorage.getSelection());
         const selectedConfiguredModel = this.selectedModelState.getSelectedModel();
 
         selectedContextStorage.clear();

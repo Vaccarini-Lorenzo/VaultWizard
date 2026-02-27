@@ -39,7 +39,6 @@ export class NoteService {
 
         const editorSelectionSnapshot = this.tryGetEditorSelectionSnapshot();
 
-        // If selection exists, store it.
         if (editorSelectionSnapshot) {
             selectedContextStorage.setSelection(
                 editorSelectionSnapshot.selectedText,
@@ -47,15 +46,11 @@ export class NoteService {
                 editorSelectionSnapshot.startLineNumber,
                 editorSelectionSnapshot.endLineNumber
             );
-            this.contextRequired = true;
             return;
         }
 
-        // Selection is empty: clear only if user is interacting with the editor.
-        // This prevents chat UI clicks/focus from clearing the badge.
         if (this.isEditorFocused()) {
             selectedContextStorage.clear();
-            this.contextRequired = true;
         }
     }
 

@@ -18,8 +18,11 @@ export class AzureResponsesSseReader {
         while (true) {
             const { value, done } = await streamReader.read();
             if (done) break;
+            
+            const chunkText = textDecoder.decode(value, { stream: true });
+            // console.log("Received chunk:", chunkText);
 
-            streamBuffer += textDecoder.decode(value, { stream: true });
+            streamBuffer += chunkText;
             const eventBlocks = streamBuffer.split("\n\n");
             streamBuffer = eventBlocks.pop() ?? "";
 

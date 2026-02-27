@@ -29,6 +29,8 @@ export class AzureAIInvoker implements AIInvoker {
             body: JSON.stringify(requestBody)
         });
 
+        console.log("body:", requestBody);
+
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Azure REST error ${response.status}: ${errorText}`);
