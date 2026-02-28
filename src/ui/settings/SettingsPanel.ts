@@ -1,6 +1,7 @@
 import { Notice, setIcon } from "obsidian";
 import { renderPersistenceSettingsForm } from "./PersistenceSettingsForm";
 import { ChatController } from "controllers/ChatController";
+import { renderUserBackgroundSection } from "./UserBackgroundSection";
 
 export function renderSettingsPanel(container: HTMLElement, controller: ChatController) {
     const settingsWrapper = container.createDiv({ cls: "vault-wizard-settings-wrap" });
@@ -84,4 +85,5 @@ export function renderSettingsPanel(container: HTMLElement, controller: ChatCont
     addModelButton.addEventListener("click", () => controller.openAddModelPanel());
 
     renderPersistenceSettingsForm(settingsWrapper, controller);
+    renderUserBackgroundSection(settingsWrapper, controller);
 }

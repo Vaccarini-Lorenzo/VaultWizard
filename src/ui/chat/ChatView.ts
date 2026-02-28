@@ -96,10 +96,10 @@ export class ChatView extends ItemView {
     }
 
     private renderNonChatPanel(activePanel: UiPanel): void {
-        if (this.renderedPanel !== activePanel) {
-            this.resetViewRoot();
-            this.renderedPanel = activePanel;
-        }
+        // Always reset non-chat panels before rendering to avoid duplicated DOM content
+        // when controller notifications trigger re-renders (e.g. saving settings).
+        this.resetViewRoot();
+        this.renderedPanel = activePanel;
 
         if (activePanel === "debug") {
             renderDebugPanel(this.contentEl, this.controller);
@@ -174,7 +174,7 @@ export class ChatView extends ItemView {
 
                 new Notice("Conversation reference inserted");
             },
-            () => this.controller.resetChatAndStartNewConversation(),
+            async () => this.controller.resetChatAndStartNewConversation(),
             () => {
                 this.historySidebarOpen = !this.historySidebarOpen;
                 this.scheduleRender();
@@ -236,9 +236,9 @@ export class ChatView extends ItemView {
                     this.historySidebarOpen = false;
                     this.scheduleRender();
                 },
-                (chatId) => {
+                async (chatId) => {
                     if (chatId === this.controller.getchatId()){
-                        this.controller.resetChatAndStartNewConversation();
+                        await this.controller.resetChatAndStartNewConversation();
                     }
                     
                     this.controller.deleteConversation(chatId).then(() => {

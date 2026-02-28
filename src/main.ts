@@ -147,6 +147,6 @@ export default class ObsidianAiHelperPlugin extends Plugin {
     }
 
     private async newChatCommand(): Promise<void> {
-        this.controller.resetChatAndStartNewConversation();
+        await this.controller.resetChatAndStartNewConversation();
     }
 }

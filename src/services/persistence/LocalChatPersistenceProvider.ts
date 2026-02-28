@@ -6,8 +6,14 @@ import { LocalChatPersistenceProviderOptions } from "../../models/persistence/Lo
 import { PersistedConversationFilePayload } from "../../models/persistence/PersistedConversationFilePayload";
 import path from "path";
 
+interface PersistedUserBackgroundInformationsFilePayload {
+    informations: string;
+    updatedAt: number;
+}
+
 export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
     private readonly chatFolderPath: string;
+    private readonly userBackgroundFileName = "user-background-informations.json";
     private readonly resolveConversationMessages: (chatId: string) => readonly ChatMessage[] | null;
     private readonly resolveConversationDebugTraces: (chatId: string) => readonly DebugTurnTrace[] | null;
 
@@ -24,7 +30,10 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
         if (!folderExists) return [];
 
         const listResult = await vaultAdapter.list(this.chatFolderPath);
-        const conversationFilePaths = listResult.files.filter((filePath) => filePath.endsWith(".json"));
+        const conversationFilePaths = listResult.files.filter((filePath) => {
+            if (!filePath.endsWith(".json")) return false;
+            return path.basename(filePath) !== this.userBackgroundFileName;
+        });
 
         const loadedConversations = await Promise.all(
             conversationFilePaths.map((conversationFilePath) => this.readConversationFile(vaultAdapter, conversationFilePath))
@@ -88,6 +97,42 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
 
         if (!fileExists) return;
         await vaultAdapter.remove(conversationFilePath);
+    }
+
+    async getUserBackgroundInformations(): Promise<string> {
+        const vaultAdapter = this.getVaultAdapter();
+        const userBackgroundFilePath = this.buildUserBackgroundInformationsFilePath();
+        const fileExists = await vaultAdapter.exists(userBackgroundFilePath);
+
+        if (!fileExists) return "";
+
+        try {
+            const rawFileContent = await vaultAdapter.read(userBackgroundFilePath);
+            const parsedPayload = JSON.parse(rawFileContent) as PersistedUserBackgroundInformationsFilePayload;
+
+            if (typeof parsedPayload?.informations !== "string") {
+                return "";
+            }
+
+            return parsedPayload.informations;
+        } catch {
+            return "";
+        }
+    }
+
+    async setUserBackgroundInformations(informations: string): Promise<void> {
+        const vaultAdapter = this.getVaultAdapter();
+        await this.ensureBaseFolder(vaultAdapter);
+
+        const payload: PersistedUserBackgroundInformationsFilePayload = {
+            informations,
+            updatedAt: Date.now()
+        };
+
+        await vaultAdapter.write(
+            this.buildUserBackgroundInformationsFilePath(),
+            JSON.stringify(payload, null, 2)
+        );
     }
 
     private async ensureBaseFolder(vaultAdapter: DataAdapter): Promise<void> {
@@ -166,5 +211,9 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
 
     private getVaultAdapter(): DataAdapter {
         return this.app.vault.adapter;
+    }
+
+    private buildUserBackgroundInformationsFilePath(): string {
+        return `${this.chatFolderPath}/${this.userBackgroundFileName}`;
     }
 }

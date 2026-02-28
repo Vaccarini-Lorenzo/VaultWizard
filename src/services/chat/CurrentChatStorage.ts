@@ -1,14 +1,20 @@
+import { PersistenceController } from "controllers/PersistenceController";
 import { ChatMessage } from "models/chat/ChatMessage";
 import { systemPromptService } from "services/context/SystemPromptService";
 
 class CurrentChatStorage {
     public messages: ChatMessage[];
     public chatId: string;
+    private persistenceController: PersistenceController | null;
 
     constructor() {
         this.messages = [];
         this.chatId = "";
-        this.appendSystemMessage();
+        this.persistenceController = null;
+    }
+
+    setPersistenceController(persistenceController: PersistenceController) {
+        this.persistenceController = persistenceController;
     }
 
     appendSystemMessage() {
@@ -18,10 +24,27 @@ class CurrentChatStorage {
         });
     }
 
-    clear(chatId: string) {
+    async appendUserInfoMessage() {
+        if (!this.persistenceController) {
+            return;
+        }
+
+        const userBackgroundInformation = await this.persistenceController.getUserBackgroundInformations();
+        if (!userBackgroundInformation){
+            return;
+        }
+
+        this.messages.push({
+            role: "developer",
+            content: "<USER_INFO>\n" + userBackgroundInformation + "\n</USER_INFO>",
+        });
+    }
+
+    async clear(chatId: string) {
         this.messages = [];
         this.chatId = chatId;
         this.appendSystemMessage();
+        await this.appendUserInfoMessage();
     }
 
     replaceConversation(chatId: string, messages: readonly ChatMessage[]): void {

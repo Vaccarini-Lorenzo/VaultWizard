@@ -14,4 +14,6 @@ export interface ChatPersistenceProvider {
     update(chatId: string): Promise<void>;
     get(chatId: string): Promise<PersistedConversation | null>;
     delete(chatId: string): Promise<void>;
+    getUserBackgroundInformations(): Promise<string>;
+    setUserBackgroundInformations(informations: string): Promise<void>;
 }

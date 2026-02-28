@@ -740,6 +740,13 @@
     }
 }
 
+.vault-wizard-settings-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+}
+
 .vault-wizard-settings-actions {
     padding: 15px ;
 }
@@ -792,4 +799,12 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+.vault-wizard-user-background-textarea {
+    min-height: 220px;
+    width: 100%;
+    resize: vertical;
+    line-height: 1.5;
+    font-size: 14px;
 }

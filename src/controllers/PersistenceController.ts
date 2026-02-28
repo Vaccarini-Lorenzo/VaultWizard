@@ -64,6 +64,14 @@ export class PersistenceController {
         return this.activeProvider.delete(chatId);
     }
 
+    getUserBackgroundInformations(): Promise<string> {
+        return this.activeProvider.getUserBackgroundInformations();
+    }
+
+    setUserBackgroundInformations(informations: string): Promise<void> {
+        return this.activeProvider.setUserBackgroundInformations(informations);
+    }
+
     private createLocalProvider(folderPath?: string): ChatPersistenceProviderContract {
         return new LocalChatPersistenceProvider(this.dependencies.app, {
             folderPath,

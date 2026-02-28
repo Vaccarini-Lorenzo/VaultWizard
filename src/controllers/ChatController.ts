@@ -16,7 +16,7 @@ import { PersistenceController } from "./PersistenceController";
 import { createConversationEmbedMarkdown } from "../services/chat/ChatEmbedLinkBuilder";
 import { selectedContextStorage } from "services/context/SelectedContextStorage";
 import { systemPromptService } from "services/context/SystemPromptService";
-
+import { normalizeUserBackgroundInformations } from "../services/context/UserInfoService";
 
 type Listener = () => void;
 
@@ -32,6 +32,8 @@ export class ChatController {
     private chatHistorySessions: ChatHistorySession[] = [];
     private editingConfiguredModelId: string | null = null;
 
+    private userBackgroundInformations = "";
+
     constructor(
         private readonly noteService: NoteService,
         private readonly llmController: LLMController,
@@ -39,6 +41,7 @@ export class ChatController {
         private readonly selectedModelState: SelectedModelState,
         private readonly chatIdFactory: ChatIdFactory , private readonly persistenceController: PersistenceController) {
         this.chatId = this.chatIdFactory.createchatId();
+        currentChatStorage.setPersistenceController(this.persistenceController);
         currentChatStorage.clear(this.chatId);
         debugTraceStorage.clear(this.chatId);
     }
@@ -56,6 +59,7 @@ export class ChatController {
 
         this.applyLocalPersistenceConfiguration();
         await this.refreshChatHistorySessions();
+        await this.refreshUserBackgroundInformations();
         this.notify();
     }
 
@@ -68,11 +72,11 @@ export class ChatController {
         return this.chatId;
     }
 
-    resetChatAndStartNewConversation(): void {
+    async resetChatAndStartNewConversation(): Promise<void> {
         this.chatId = this.chatIdFactory.createchatId();
         this.persistCurrentConversationIfNeeded();
         systemPromptService.resetSystemPrompt();
-        currentChatStorage.clear(this.chatId);
+        await currentChatStorage.clear(this.chatId);
         debugTraceStorage.clear(this.chatId);
         this.streaming = false;
         this.notify();
@@ -176,6 +180,20 @@ export class ChatController {
 
     getChatHistorySessions(): readonly ChatHistorySession[] {
         return this.chatHistorySessions;
+    }
+
+    getUserBackgroundInformations(): string {
+        return this.userBackgroundInformations;
+    }
+
+    async saveUserBackgroundInformations(rawInformations: string): Promise<void> {
+        const normalizedInformations = normalizeUserBackgroundInformations(rawInformations);
+
+        if (normalizedInformations === this.userBackgroundInformations) return;
+
+        this.userBackgroundInformations = normalizedInformations;
+        await this.persistenceController.setUserBackgroundInformations(normalizedInformations);
+        this.notify();
     }
 
     async openConversationById(chatId: string): Promise<boolean> {
@@ -523,6 +541,20 @@ export class ChatController {
         });
 
         void this.refreshChatHistorySessions();
+        void this.refreshUserBackgroundInformations(true);
+    }
+
+    private async refreshUserBackgroundInformations(notifyWhenChanged = false): Promise<void> {
+        const persistedInformations = await this.persistenceController.getUserBackgroundInformations();
+        const normalizedInformations = normalizeUserBackgroundInformations(persistedInformations);
+
+        if (normalizedInformations === this.userBackgroundInformations) return;
+
+        this.userBackgroundInformations = normalizedInformations;
+
+        if (notifyWhenChanged) {
+            this.notify();
+        }
     }
 
     private applyConversationSnapshot(
