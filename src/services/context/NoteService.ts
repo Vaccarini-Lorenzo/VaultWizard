@@ -56,17 +56,19 @@ export class NoteService {
 
     async getContext(): Promise<string> {
         let context = "";
+
+        const selectedContextSnapshot = selectedContextStorage.getSelection();
+        if (selectedContextSnapshot?.text){
+            context += `\n<SELECTED_CONTEXT_START>\n${selectedContextSnapshot.text}\n<SELECTED_CONTEXT_END>`;
+            return context;
+        }
+
         if (this.contextRequired) {
             const activeFileContent = await this.getActiveNoteContent();
             if (activeFileContent.trim().length > 0) {
                 context += `<NOTE_CONTENT_START>\n${activeFileContent}\n<NOTE_CONTENT_END>`;
                 this.contextRequired = false;
             }
-        }
-
-        const selectedContextSnapshot = selectedContextStorage.getSelection();
-        if (selectedContextSnapshot?.text){
-            context += `\n<SELECTED_CONTEXT_START>\n${selectedContextSnapshot.text}\n<SELECTED_CONTEXT_END>`;
         }
         return context;
     }
