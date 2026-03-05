@@ -49,7 +49,19 @@ export class NoteService {
             return;
         }
 
-        if (this.isEditorFocused()) {
+        const readerModeSelectedText = this.tryGetReaderModeSelectedText();
+
+        if (readerModeSelectedText) {
+            selectedContextStorage.setSelection(
+                readerModeSelectedText,
+                activeFile.path,
+                0,
+                0
+            );
+            return;
+        }
+
+        if (this.isEditorFocused() || this.isReaderModeFocused()) {
             selectedContextStorage.clear();
         }
     }
@@ -98,11 +110,40 @@ export class NoteService {
         };
     }
 
+    private tryGetReaderModeSelectedText(): string | null {
+        const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!markdownView) return null;
+
+        const isReaderMode = markdownView.getMode() === "preview";
+        if (!isReaderMode) return null;
+
+        const nativeSelection = document.getSelection();
+        if (!nativeSelection || nativeSelection.isCollapsed) return null;
+
+        const previewContainer = markdownView.contentEl?.querySelector(".markdown-preview-view");
+        if (!previewContainer) return null;
+
+        const selectionRange = nativeSelection.getRangeAt(0);
+        if (!previewContainer.contains(selectionRange.commonAncestorContainer)) return null;
+
+        const selectedText = nativeSelection.toString();
+        if (!selectedText?.trim()) return null;
+
+        return selectedText;
+    }
+
     private isEditorFocused(): boolean {
         const activeElement = document.activeElement as HTMLElement | null;
         if (!activeElement) return false;
 
         return activeElement.closest(".cm-editor") !== null;
+    }
+
+    private isReaderModeFocused(): boolean {
+        const activeElement = document.activeElement as HTMLElement | null;
+        if (!activeElement) return false;
+
+        return activeElement.closest(".markdown-preview-view") !== null;
     }
 
     insertTextAtCursor(textToInsert: string): boolean {

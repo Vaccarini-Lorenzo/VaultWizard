@@ -36,6 +36,7 @@ class SelectedContextStorage {
     }
 
     getSelection(): SelectedContextSnapshot | null {
+        console.log("Retrieving selected context snapshot:", this.selectedContextSnapshot);
         return this.selectedContextSnapshot;
     }
 

@@ -57,6 +57,7 @@ export default class ObsidianAiHelperPlugin extends Plugin {
         });
 
         this.registerDomEvent(document, "selectionchange", () => {
+            // console.log("Selection changed, capturing selection from active note.");
             noteService.captureSelectionFromActiveNote();
         });
 
