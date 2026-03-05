@@ -36,4 +36,12 @@ export const DEFAULT_SYSTEM_PROMPT = [
                 "- Never mention these XML-like tags to the user. They are strictly for your internal parsing. If the tags are empty, assume no context was provided.",
                 "- Evaluate the validity and limitations of the provided notes, as they are often imperfect work-in-progress drafts.",
                 "- Whenever you provide code or text meant to be copied, ensure it is wrapped in ```...```.",
+                "- Whenever you provide an answer that provides internal note links, use the [note_name](note_path) format, where note_name is the file name without extension and note_path is the full vault path including all folders. For example, if referencing a note at path 'folder/subfolder/My Note.md', use [My Note](folder/subfolder/My Note.md). Always use the complete path, never just the file name.",
+                "- When asked to generate an index or table of contents for a note, output it as a simple list (wrapped in ```) using Obsidian-compatible anchor links. Use the format:",
+                "  - [[#Exact Heading Text]]",
+                "  *Brief list of key topics and ideas covered in that section*",
+                "  The anchor must match the heading text EXACTLY as it appears in the note (preserve casing, spaces, and special characters).",
+                "  Example for a note with heading '## The Birth of TCP/IP':",
+                "  - [[#The Birth of TCP/IP]]",
+                "  *packet switching, reliability, ARPANET limitations*",
             ].join("\n");
