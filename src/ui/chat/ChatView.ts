@@ -2,7 +2,6 @@ import { ItemView, Notice, WorkspaceLeaf } from "obsidian";
 import { VIEW_TYPE_AI_HELPER } from "../../constants";
 import { ChatController } from "../../controllers/ChatController";
 import { renderDebugPanel } from "../debug/DebugPanel";
-import { renderChatComposer } from "./ChatComposer";
 import { renderChatHeader } from "./ChatHeader";
 import { renderSelectedContextBadge } from "./SelectedContextBadge";
 import { currentChatStorage } from "services/chat/CurrentChatStorage";
@@ -12,6 +11,7 @@ import { renderAddModelPanel } from "ui/settings/AddModelPanel";
 import { MessageListViewUpdater } from "./MessageList";
 import { UiPanel } from "../../models/misc/UiPanel";
 import { ChatHistorySidebarViewUpdater } from "../chat_history/ChatHistorySidebarViewUpdater";
+import { ChatComposerViewUpdater } from "./ChatComposerViewUpdater";
 
 export class ChatView extends ItemView {
     private unsubscribe?: () => void;
@@ -29,6 +29,7 @@ export class ChatView extends ItemView {
     private historyOverlayElement: HTMLElement | null = null;
     private messageListViewUpdater: MessageListViewUpdater | null = null;
     private historySidebarViewUpdater: ChatHistorySidebarViewUpdater | null = null;
+    private chatComposerViewUpdater: ChatComposerViewUpdater | null = null;
 
     constructor(
         leaf: WorkspaceLeaf,
@@ -142,6 +143,13 @@ export class ChatView extends ItemView {
                 cls: "vault-wizard-chat-composer-shell"
             });
 
+            this.chatComposerViewUpdater = new ChatComposerViewUpdater(
+                this.composerShellElement,
+                async (value) => {
+                    await this.controller.onUserMessage(value);
+                }
+            );
+
             this.renderedPanel = "chat";
             return;
         }
@@ -200,16 +208,9 @@ export class ChatView extends ItemView {
             );
         }
 
-        if (this.composerShellElement) {
-            this.composerShellElement.empty();
-            renderChatComposer(
-                this.composerShellElement,
-                async (value) => {
-                    await this.controller.onUserMessage(value);
-                },
-                this.controller.isStreaming()
-            );
-        }
+        this.chatComposerViewUpdater?.sync({
+            isSendBlocked: this.controller.isStreaming()
+        });
 
         this.renderHistorySidebar();
     }
@@ -269,5 +270,6 @@ export class ChatView extends ItemView {
         this.historyOverlayElement = null;
         this.historySidebarViewUpdater = null;
         this.messageListViewUpdater = null;
+        this.chatComposerViewUpdater = null;
     }
 }
