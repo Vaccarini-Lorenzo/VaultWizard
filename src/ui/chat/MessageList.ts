@@ -1,6 +1,7 @@
 import { App, Component } from "obsidian";
 import { ChatMessage } from "../../models/chat/ChatMessage";
 import { ChatMessageRenderer } from "../chat/ChatMessageRenderer";
+import { StreamingMessageMarkdownCoordinator } from "./StreamingMessageMarkdownCoordinator";
 
 export interface MessageListRenderOptions {
     app: App;
@@ -14,10 +15,10 @@ interface RenderedMessageEntry {
     timestamp?: number;
     content: string;
     contentElement: HTMLElement;
-    renderedAsPlainText: boolean;
 }
 
 const AUTO_SCROLL_BOTTOM_THRESHOLD_PX = 56;
+const STREAMING_MARKDOWN_MIN_RENDER_INTERVAL_MS = 120;
 
 function formatMessageRole(chatMessage: ChatMessage): string {
     return chatMessage.role === "user" ? "You" : "Assistant";
@@ -32,7 +33,7 @@ function getVisibleMessages(messages: ChatMessage[]): ChatMessage[] {
     return messages.filter((chatMessage) => chatMessage.role !== "system" && chatMessage.role !== "developer");
 }
 
-function shouldRenderAsPlainText(
+function isStreamingAssistantMessage(
     chatMessage: ChatMessage,
     messageIndex: number,
     totalMessages: number,
@@ -46,11 +47,19 @@ function shouldRenderAsPlainText(
 export class MessageListViewUpdater {
     private readonly listElement: HTMLElement;
     private readonly renderedEntries: RenderedMessageEntry[] = [];
+    private readonly streamingMarkdownCoordinator: StreamingMessageMarkdownCoordinator;
     private currentSourcePath = "";
     private markdownRenderer: ChatMessageRenderer | null = null;
 
     constructor(private readonly container: HTMLElement) {
         this.listElement = this.container.createDiv({ cls: "vault-wizard-message-list" });
+
+        this.streamingMarkdownCoordinator = new StreamingMessageMarkdownCoordinator(
+            async (targetElement, markdownContent) => {
+                await this.markdownRenderer?.renderMarkdown(targetElement, markdownContent);
+            },
+            STREAMING_MARKDOWN_MIN_RENDER_INTERVAL_MS
+        );
     }
 
     sync(messages: ChatMessage[], messageListRenderOptions: MessageListRenderOptions): void {
@@ -61,20 +70,24 @@ export class MessageListViewUpdater {
 
         if (this.requiresFullRerender(visibleMessages)) {
             this.fullRerender(visibleMessages, messageListRenderOptions.isStreaming, shouldKeepBottomAnchored);
-            return;
+        } else {
+            const didUpdateMessageList = this.applyIncrementalUpdates(
+                visibleMessages,
+                messageListRenderOptions.isStreaming
+            );
+
+            if (didUpdateMessageList && shouldKeepBottomAnchored) {
+                this.scrollToBottom();
+            }
         }
 
-        const didUpdateMessageList = this.applyIncrementalUpdates(
-            visibleMessages,
-            messageListRenderOptions.isStreaming
-        );
-
-        if (didUpdateMessageList && shouldKeepBottomAnchored) {
-            this.scrollToBottom();
+        if (!messageListRenderOptions.isStreaming) {
+            this.streamingMarkdownCoordinator.flushPendingRender();
         }
     }
 
     clear(): void {
+        this.streamingMarkdownCoordinator.reset();
         this.renderedEntries.splice(0, this.renderedEntries.length);
         this.listElement.empty();
     }
@@ -118,6 +131,7 @@ export class MessageListViewUpdater {
         isStreaming: boolean,
         shouldKeepBottomAnchored: boolean
     ): void {
+        this.streamingMarkdownCoordinator.reset();
         this.listElement.empty();
         this.renderedEntries.splice(0, this.renderedEntries.length);
 
@@ -145,22 +159,23 @@ export class MessageListViewUpdater {
             }
 
             const existingEntry = this.renderedEntries[messageIndex];
-            const nextShouldBePlainText = shouldRenderAsPlainText(
+            const didContentChange = existingEntry.content !== nextMessage.content;
+            if (!didContentChange) continue;
+
+            const shouldThrottleStreamingRender = isStreamingAssistantMessage(
                 nextMessage,
                 messageIndex,
                 nextMessages.length,
                 isStreaming
             );
 
-            const didContentChange = existingEntry.content !== nextMessage.content;
-            const didRenderModeChange = existingEntry.renderedAsPlainText !== nextShouldBePlainText;
-
-            if (!didContentChange && !didRenderModeChange) continue;
-
-            this.renderMessageContent(existingEntry.contentElement, nextMessage.content, nextShouldBePlainText);
+            this.renderMessageContent(
+                existingEntry.contentElement,
+                nextMessage.content,
+                shouldThrottleStreamingRender
+            );
 
             existingEntry.content = nextMessage.content;
-            existingEntry.renderedAsPlainText = nextShouldBePlainText;
             didUpdateMessageList = true;
         }
 
@@ -199,37 +214,38 @@ export class MessageListViewUpdater {
             cls: "vault-wizard-message-content markdown-rendered"
         });
 
-        const renderAsPlainText = shouldRenderAsPlainText(
+        const shouldThrottleStreamingRender = isStreamingAssistantMessage(
             chatMessage,
             messageIndex,
             totalMessages,
             isStreaming
         );
 
-        this.renderMessageContent(messageContentElement, chatMessage.content, renderAsPlainText);
+        this.renderMessageContent(
+            messageContentElement,
+            chatMessage.content,
+            shouldThrottleStreamingRender
+        );
 
         this.renderedEntries.push({
             role: chatMessage.role,
             timestamp: chatMessage.timestamp,
             content: chatMessage.content,
-            contentElement: messageContentElement,
-            renderedAsPlainText: renderAsPlainText
+            contentElement: messageContentElement
         });
     }
 
     private renderMessageContent(
         messageContentElement: HTMLElement,
         content: string,
-        renderAsPlainText: boolean
+        shouldThrottleStreamingRender: boolean
     ): void {
-        messageContentElement.empty();
-
-        if (renderAsPlainText) {
-            messageContentElement.setText(content);
+        if (shouldThrottleStreamingRender) {
+            this.streamingMarkdownCoordinator.schedule(messageContentElement, content);
             return;
         }
 
-        this.markdownRenderer?.renderMarkdown(messageContentElement, content);
+        void this.markdownRenderer?.renderMarkdown(messageContentElement, content);
     }
 
     private shouldKeepBottomAnchored(): boolean {

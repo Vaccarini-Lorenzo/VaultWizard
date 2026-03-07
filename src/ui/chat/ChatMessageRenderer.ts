@@ -9,10 +9,10 @@ export interface ChatMessageRenderingContext {
 export class ChatMessageRenderer {
     constructor(private readonly renderingContext: ChatMessageRenderingContext) {}
 
-    renderMarkdown(targetElement: HTMLElement, markdownContent: string): void {
+    async renderMarkdown(targetElement: HTMLElement, markdownContent: string): Promise<void> {
         targetElement.empty();
 
-        void MarkdownRenderer.render(
+        await MarkdownRenderer.render(
             this.renderingContext.app,
             markdownContent,
             targetElement,
