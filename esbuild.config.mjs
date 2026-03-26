@@ -9,7 +9,12 @@ const ctx = await esbuild.context({
   bundle: true,
   outfile: "main.js",
   format: "cjs",
-  platform: "browser",
+
+  // changed: force Node package resolution (needed by @azure/identity)
+  platform: "node",
+  conditions: ["node"],
+  mainFields: ["main", "module"],
+
   target: "es2020",
   sourcemap: isProd ? false : "inline",
   minify: isProd,

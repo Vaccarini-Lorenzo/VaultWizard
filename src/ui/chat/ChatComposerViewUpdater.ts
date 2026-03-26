@@ -11,6 +11,7 @@ export class ChatComposerViewUpdater {
     private readonly inputElement: HTMLTextAreaElement;
     private readonly sendButtonElement: HTMLButtonElement;
 
+    private readonly minimumInputHeightPx = 70;
     private isSendBlocked = false;
 
     constructor(
@@ -29,6 +30,7 @@ export class ChatComposerViewUpdater {
         });
 
         this.inputElement.value = chatComposerDraftStorage.loadText();
+        this.adjustInputHeightToContent();
 
         this.bindEvents();
     }
@@ -37,6 +39,7 @@ export class ChatComposerViewUpdater {
         this.isSendBlocked = nextState.isSendBlocked;
         this.sendButtonElement.disabled = this.isSendBlocked;
         this.sendButtonElement.textContent = this.isSendBlocked ? "..." : "Send";
+        this.adjustInputHeightToContent();
     }
 
     private bindEvents(): void {
@@ -49,6 +52,7 @@ export class ChatComposerViewUpdater {
 
         this.inputElement.addEventListener("input", () => {
             chatComposerDraftStorage.saveDraft(this.inputElement.value);
+            this.adjustInputHeightToContent();
         });
 
         this.sendButtonElement.addEventListener("click", async () => {
@@ -69,6 +73,17 @@ export class ChatComposerViewUpdater {
         const messageToSend = this.inputElement.value;
         this.inputElement.value = "";
         chatComposerDraftStorage.clearDraft();
+        this.resetInputHeight();
         await this.onSendMessage(messageToSend);
+    }
+
+    private adjustInputHeightToContent(): void {
+        this.inputElement.style.height = "auto";
+        const nextInputHeightPx = Math.max(this.minimumInputHeightPx, this.inputElement.scrollHeight);
+        this.inputElement.style.height = `${nextInputHeightPx}px`;
+    }
+
+    private resetInputHeight(): void {
+        this.inputElement.style.height = `${this.minimumInputHeightPx}px`;
     }
 }

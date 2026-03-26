@@ -56,6 +56,32 @@ function validateAdditionalJsonBody(additionalJsonBodyValue: string): void {
     }
 }
 
+function validateAzureAuthenticationSettings(
+    selectedProvider: AiProvider,
+    providerSettings: Record<string, string>
+): void {
+    if (selectedProvider !== "azure") return;
+
+    const apiKey = providerSettings.apiKey?.trim() ?? "";
+    const tenantId = providerSettings.tenantId?.trim() ?? "";
+    const clientId = providerSettings.clientId?.trim() ?? "";
+    const clientSecret = providerSettings.clientSecret?.trim() ?? "";
+
+    const hasApiKey = Boolean(apiKey);
+    const hasAnyClientCredentialField = Boolean(tenantId || clientId || clientSecret);
+    const hasCompleteClientCredentials = Boolean(tenantId && clientId && clientSecret);
+
+    if (!hasApiKey && !hasCompleteClientCredentials) {
+        throw new Error(
+            `For Azure, provide either "API Key" or all of "Tenant ID", "Client ID", and "Client Secret".`
+        );
+    }
+
+    if (!hasApiKey && hasAnyClientCredentialField && !hasCompleteClientCredentials) {
+        throw new Error(`Azure Client Credentials auth requires Tenant ID, Client ID, and Client Secret.`);
+    }
+}
+
 export function renderAddModelPanel(container: HTMLElement, controller: ChatController) {
     const editingConfiguredModel = controller.getEditingConfiguredModel();
     const isEditingConfiguredModel = editingConfiguredModel !== null;
@@ -175,6 +201,7 @@ export function renderAddModelPanel(container: HTMLElement, controller: ChatCont
         providerSettings.additional_json_body = additionalJsonBodyTextarea.value.trim();
 
         try {
+            validateAzureAuthenticationSettings(selectedProvider, providerSettings);
             validateAdditionalJsonBody(providerSettings.additional_json_body);
         } catch (error) {
             const validationMessage =

@@ -4,6 +4,7 @@ interface ProviderFieldDefinition {
     settingKey: string;
     label: string;
     placeholder: string;
+    inputType?: "text" | "password";
 }
 
 const providerFieldDefinitions: Record<AiProvider, ProviderFieldDefinition[]> = {
@@ -15,8 +16,30 @@ const providerFieldDefinitions: Record<AiProvider, ProviderFieldDefinition[]> = 
         },
         {
             settingKey: "apiKey",
-            label: "API Key",
-            placeholder: "Azure API key"
+            label: "API Key (optional if using Client ID/Secret)",
+            placeholder: "Azure API key",
+            inputType: "password"
+        },
+        {
+            settingKey: "tenantId",
+            label: "Tenant ID (for Client Credentials auth)",
+            placeholder: "Azure AD tenant ID"
+        },
+        {
+            settingKey: "clientId",
+            label: "Client ID (for Client Credentials auth)",
+            placeholder: "Azure AD app client ID"
+        },
+        {
+            settingKey: "clientSecret",
+            label: "Client Secret (for Client Credentials auth)",
+            placeholder: "Azure AD app client secret",
+            inputType: "password"
+        },
+        {
+            settingKey: "authorityHost",
+            label: "Authority Host (optional)",
+            placeholder: "https://login.microsoftonline.com"
         },
         {
             settingKey: "deploymentName",
@@ -33,7 +56,8 @@ const providerFieldDefinitions: Record<AiProvider, ProviderFieldDefinition[]> = 
         {
             settingKey: "apiKey",
             label: "API Key",
-            placeholder: "OpenAI API key"
+            placeholder: "OpenAI API key",
+            inputType: "password"
         },
         {
             settingKey: "model",
@@ -50,7 +74,8 @@ const providerFieldDefinitions: Record<AiProvider, ProviderFieldDefinition[]> = 
         {
             settingKey: "apiKey",
             label: "API Key",
-            placeholder: "Anthropic API key"
+            placeholder: "Anthropic API key",
+            inputType: "password"
         },
         {
             settingKey: "model",
@@ -73,7 +98,7 @@ function createProviderInput(
     fieldWrapper.createEl("input", {
         cls: "vault-wizard-form-input",
         attr: {
-            type: "text",
+            type: providerFieldDefinition.inputType ?? "text",
             placeholder: providerFieldDefinition.placeholder,
             "data-setting-key": providerFieldDefinition.settingKey
         }

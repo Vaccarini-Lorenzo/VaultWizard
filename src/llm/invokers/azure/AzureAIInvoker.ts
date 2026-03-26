@@ -1,35 +1,35 @@
-import { AIInvoker, AIInvokerInput, AIInvokerResult } from "../AIInvoker";
 import { TokenUsage } from "../../../models/llm/TokenUsage";
 import { AzureResponsesSseReader } from "./helpers/AzureResponsesSseReader";
 import { AzureResponsesTextExtractor } from "./helpers/AzureResponsesTextExtractor";
 import { AzureResponsesUsageExtractor } from "./helpers/AzureResponsesUsageExtractor";
 import { currentChatStorage } from "services/chat/CurrentChatStorage";
+import { AzureClientCredentialsTokenProvider } from "./helpers/AzureClientCredentialsTokenProvider";
+import { AIInvoker, AIInvokerInput, AIInvokerResult } from "../AIInvoker";
 
 export class AzureAIInvoker implements AIInvoker {
     private readonly textExtractor = new AzureResponsesTextExtractor();
     private readonly usageExtractor = new AzureResponsesUsageExtractor();
     private readonly sseReader = new AzureResponsesSseReader(this.textExtractor);
+    private readonly azureClientCredentialsTokenProvider = new AzureClientCredentialsTokenProvider();
 
     async streamResponse(
         aiInvokerInput: AIInvokerInput,
         onChunk: (chunk: string) => void
     ): Promise<AIInvokerResult> {
-        const endpointBase = this.tryGetSetting(aiInvokerInput, "endpoint");
-        const apiKey = this.tryGetSetting(aiInvokerInput, "apiKey");
-        const deploymentName = this.tryGetSetting(aiInvokerInput, "deploymentName");
-        const apiVersion = this.tryGetSetting(aiInvokerInput, "apiVersion");
+        const endpointBase = this.tryGetRequiredSetting(aiInvokerInput, "endpoint");
+        const deploymentName = this.tryGetRequiredSetting(aiInvokerInput, "deploymentName");
+        const apiVersion = this.tryGetRequiredSetting(aiInvokerInput, "apiVersion");
         const endpointUrl = this.buildResponsesUrl(endpointBase, apiVersion);
 
         const additionalJsonBody = this.tryParseAdditionalJsonBody(aiInvokerInput);
         const requestBody = this.buildRequestBody(deploymentName, additionalJsonBody);
+        const headers = await this.buildHeaders(aiInvokerInput);
 
         const response = await fetch(endpointUrl, {
             method: "POST",
-            headers: this.buildHeaders(apiKey),
+            headers,
             body: JSON.stringify(requestBody)
         });
-
-        console.log("body:", requestBody);
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -63,19 +63,58 @@ export class AzureAIInvoker implements AIInvoker {
         return { tokenUsage: finalTokenUsage };
     }
 
-    private buildHeaders(apiKey: string): HeadersInit {
+    private async buildHeaders(aiInvokerInput: AIInvokerInput): Promise<HeadersInit> {
+        const apiKey = this.tryGetOptionalSetting(aiInvokerInput, "apiKey");
+        const commonHeaders: HeadersInit = {
+            "Content-Type": "application/json"
+        };
+
+        if (apiKey) {
+            return {
+                ...commonHeaders,
+                "api-key": apiKey
+            };
+        }
+
+        const bearerToken = await this.getBearerTokenFromClientCredentials(aiInvokerInput);
         return {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`
+            ...commonHeaders,
+            Authorization: `Bearer ${bearerToken}`
         };
     }
 
-    private tryGetSetting(aiInvokerInput: AIInvokerInput, settingName: string): string {
-        const settingValue = aiInvokerInput.configuredModel.settings[settingName];
+    private async getBearerTokenFromClientCredentials(aiInvokerInput: AIInvokerInput): Promise<string> {
+        const tenantId = this.tryGetOptionalSetting(aiInvokerInput, "tenantId");
+        const clientId = this.tryGetOptionalSetting(aiInvokerInput, "clientId");
+        const clientSecret = this.tryGetOptionalSetting(aiInvokerInput, "clientSecret");
+        const authorityHost = this.tryGetOptionalSetting(aiInvokerInput, "authorityHost");
+
+        if (!tenantId || !clientId || !clientSecret) {
+            throw new Error(
+                `Missing Azure authentication settings. Provide either "apiKey" or all of "tenantId", "clientId", and "clientSecret".`
+            );
+        }
+
+        return this.azureClientCredentialsTokenProvider.getAccessToken({
+            tenantId,
+            clientId,
+            clientSecret,
+            authorityHost
+        });
+    }
+
+    private tryGetRequiredSetting(aiInvokerInput: AIInvokerInput, settingName: string): string {
+        const settingValue = this.tryGetOptionalSetting(aiInvokerInput, settingName);
         if (!settingValue) {
             throw new Error(`Missing required setting: ${settingName}`);
         }
         return settingValue;
+    }
+
+    private tryGetOptionalSetting(aiInvokerInput: AIInvokerInput, settingName: string): string | undefined {
+        const rawSettingValue = aiInvokerInput.configuredModel.settings[settingName];
+        const trimmedSettingValue = rawSettingValue?.trim();
+        return trimmedSettingValue ? trimmedSettingValue : undefined;
     }
 
     private buildResponsesUrl(endpointBase: string, apiVersion: string): string {
@@ -84,13 +123,9 @@ export class AzureAIInvoker implements AIInvoker {
     }
 
     private buildInputMessages(): Array<{ role: string; content: string }> {
-        const messages = currentChatStorage.getMessages().map(msg => {
-            let role = msg.role;
-            let content = msg.content;
-            if (role == "developer"){
-                role = "developer"
-                content = content
-            }
+        const messages = currentChatStorage.getMessages().map(message => {
+            const role = message.role;
+            const content = message.content;
             return { role, content };
         });
         return messages;

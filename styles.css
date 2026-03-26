@@ -51,7 +51,7 @@
     display: flex;
     width: 100%;
     max-width: 100%;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .vault-wizard-chat-body-shell .vault-wizard-chat-main {
@@ -194,7 +194,8 @@
 
 .vault-wizard-input {
     min-height: 70px;
-    resize: vertical;
+    resize: none;
+    overflow-y: hidden;
     width: 100%;
     font-size: 18px;
 }
