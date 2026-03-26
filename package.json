@@ -1,5 +1,5 @@
 {
-  "name": "vault_wizard",
+  "name": "vault_wizard.nosync",
   "version": "0.0.1",
   "description": "Draft AI chat for Obsidian",
   "main": "main.js",
@@ -20,5 +20,8 @@
     "esbuild": "^0.25.0",
     "obsidian": "^1.7.2",
     "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.13.1"
   }
 }

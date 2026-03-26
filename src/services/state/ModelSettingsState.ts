@@ -13,7 +13,7 @@ export class ModelSettingsState {
 
     constructor(private readonly app: App) {
         const basePath = (this.app.vault.adapter as any)?.basePath ?? (window as any)?.app?.vault?.adapter?.basePath;
-        this.pluginFolderPath = path.join(".obsidian", "plugins", "vault_wizard");
+        this.pluginFolderPath = path.join(".obsidian", "plugins", "vault_wizard.nosync");
         this.settingsFilePath = path.join(this.pluginFolderPath, ".model_settings.json");
     }
 

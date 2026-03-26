@@ -26,7 +26,7 @@ Current behavior:
 
 Vault Wizard stores model settings in the vault plugin folder:
 
-`.obsidian/plugins/vault_wizard/.model_settings.json`
+`.obsidian/plugins/vault_wizard.nosync/.model_settings.json`
 
 ## Roadmap
 

@@ -52,7 +52,7 @@ function renderLocalProviderFields(
             "Folder Path",
             "text",
             settings.folderPath,
-            ".obsidian/plugins/vault_wizard/chats",
+            ".obsidian/plugins/vault_wizard.nosync/chats",
             (nextFolderPath) => {
                 controller.updateLocalChatPersistenceSettings({ folderPath: nextFolderPath });
             }

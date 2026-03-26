@@ -18,7 +18,7 @@ export class LocalChatPersistenceProvider implements ChatPersistenceProvider {
     private readonly resolveConversationDebugTraces: (chatId: string) => readonly DebugTurnTrace[] | null;
 
     constructor(private readonly app: App, options: LocalChatPersistenceProviderOptions) {
-        this.chatFolderPath = options.folderPath?.trim() || path.join(".obsidian", "plugins", "vault_wizard", "chats");
+        this.chatFolderPath = options.folderPath?.trim() || path.join(".obsidian", "plugins", "vault_wizard.nosync", "chats");
         this.resolveConversationMessages = options.resolveConversationMessages;
         this.resolveConversationDebugTraces = options.resolveConversationDebugTraces;
     }
